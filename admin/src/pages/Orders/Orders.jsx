@@ -14,7 +14,7 @@ import {
 } from "react-icons/fa";
 
 const Orders = () => {
-  const url = "http://localhost:4000";
+  const url = import.meta.env.VITE_BACKEND_URL;
   const [orders, setOrders] = useState([]);
   const [copiedOrderId, setCopiedOrderId] = useState(null);
   const [startDate, setStartDate] = useState("");
@@ -34,11 +34,11 @@ const Orders = () => {
   };
 
   const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [cancelReason, setCancelReason] = useState('');
+  const [cancelReason, setCancelReason] = useState("");
   const [selectedOrderForCancel, setSelectedOrderForCancel] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedOrderForDelete, setSelectedOrderForDelete] = useState(null);
-  
+
   const handleCancelSubmit = async () => {
     if (!cancelReason.trim()) {
       toast.error("Please provide a cancellation reason");
@@ -47,12 +47,12 @@ const Orders = () => {
 
     try {
       const loadingToast = toast.loading("Cancelling order...");
-      
+
       // Update order status
       const response = await axios.post(url + "/api/order/status", {
         orderId: selectedOrderForCancel.orderId,
-        status: 'cancelled',
-        cancelReason: cancelReason.trim()
+        status: "cancelled",
+        cancelReason: cancelReason.trim(),
       });
 
       if (response.data.success) {
@@ -60,26 +60,26 @@ const Orders = () => {
           render: "Order cancelled successfully",
           type: "success",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
 
         // If we got a WhatsApp URL, open it after a short delay
         if (response.data.whatsappUrl) {
           setTimeout(() => {
-            window.open(response.data.whatsappUrl, '_blank');
+            window.open(response.data.whatsappUrl, "_blank");
           }, 500);
         }
 
         await fetchAllOrders();
         setShowCancelDialog(false);
-        setCancelReason('');
+        setCancelReason("");
         setSelectedOrderForCancel(null);
       } else {
         toast.update(loadingToast, {
           render: response.data.message || "Failed to cancel order",
           type: "error",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
       }
     } catch (error) {
@@ -95,19 +95,22 @@ const Orders = () => {
 
     try {
       const loadingToast = toast.loading("Deleting order...");
-      
-      const response = await axios.delete(`${url}/api/order/delete/${selectedOrderForDelete._id}`, {
-        headers: {
-          'Content-Type': 'application/json'
+
+      const response = await axios.delete(
+        `${url}/api/order/delete/${selectedOrderForDelete._id}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       if (response.data.success) {
         toast.update(loadingToast, {
           render: "Order deleted successfully",
           type: "success",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
         await fetchAllOrders();
         setShowDeleteDialog(false);
@@ -117,7 +120,7 @@ const Orders = () => {
           render: response.data.message || "Failed to delete order",
           type: "error",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
       }
     } catch (error) {
@@ -130,20 +133,23 @@ const Orders = () => {
   const statusHandler = async (event, orderId, currentOrder) => {
     const newStatus = event.target.value;
     const currentStatus = currentOrder.status;
-    
+
     try {
       // Validate status transition from pending
-      if (currentStatus === 'pending' && !['confirmed', 'cancelled'].includes(newStatus)) {
+      if (
+        currentStatus === "pending" &&
+        !["confirmed", "cancelled"].includes(newStatus)
+      ) {
         toast.error("Pending orders can only be confirmed or cancelled");
         event.target.value = currentStatus;
         return;
       }
 
       // If status is cancelled, show the cancel dialog
-      if (newStatus === 'cancelled') {
+      if (newStatus === "cancelled") {
         setSelectedOrderForCancel({
           orderId,
-          order: currentOrder
+          order: currentOrder,
         });
         setShowCancelDialog(true);
         event.target.value = currentStatus;
@@ -151,28 +157,34 @@ const Orders = () => {
       }
 
       // Show loading toast for better UX
-      const loadingToast = toast.loading(`Updating order status to ${newStatus}...`);
+      const loadingToast = toast.loading(
+        `Updating order status to ${newStatus}...`
+      );
 
       try {
         // Update order status - handle all payment methods the same way
         const response = await axios.post(url + "/api/order/status", {
           orderId,
           status: newStatus,
-          paymentMethod: currentOrder.payment?.method || 'COD' // Default to COD if no payment method
+          paymentMethod: currentOrder.payment?.method || "COD", // Default to COD if no payment method
         });
 
         if (response.data.success) {
           toast.update(loadingToast, {
-            render: `Order ${newStatus === 'confirmed' ? 'confirmed! 🎉' : `status updated to ${newStatus}`}`,
+            render: `Order ${
+              newStatus === "confirmed"
+                ? "confirmed! 🎉"
+                : `status updated to ${newStatus}`
+            }`,
             type: "success",
             isLoading: false,
-            autoClose: 3000
+            autoClose: 3000,
           });
 
           // If we got a WhatsApp URL, open it after a short delay
           if (response.data.whatsappUrl) {
             setTimeout(() => {
-              window.open(response.data.whatsappUrl, '_blank');
+              window.open(response.data.whatsappUrl, "_blank");
             }, 500);
           }
 
@@ -182,7 +194,7 @@ const Orders = () => {
             render: response.data.message || "Failed to update status",
             type: "error",
             isLoading: false,
-            autoClose: 3000
+            autoClose: 3000,
           });
           event.target.value = currentStatus;
         }
@@ -191,7 +203,7 @@ const Orders = () => {
           render: error.response?.data?.message || "Failed to update status",
           type: "error",
           isLoading: false,
-          autoClose: 3000
+          autoClose: 3000,
         });
         event.target.value = currentStatus;
       }
@@ -203,10 +215,10 @@ const Orders = () => {
   };
 
   const handleWhatsAppClick = (order) => {
-    const orderDetails = order.items.map(item => 
-      `${item.name} (${item.size}) × ${item.quantity}`
-    ).join(", ");
-    
+    const orderDetails = order.items
+      .map((item) => `${item.name} (${item.size}) × ${item.quantity}`)
+      .join(", ");
+
     const message = `Order Details:
 Order ID: ${order._id}
 Customer: ${order.userId.name}
@@ -216,8 +228,10 @@ Items: ${orderDetails}
 Shipping Address: ${order.address.street}, ${order.address.city}, ${order.address.state} - ${order.address.pincode}
 Payment Method: ${order.payment.method}`;
 
-    const whatsappUrl = `https://wa.me/917899940804?text=${encodeURIComponent(message)}`;
-    window.open(whatsappUrl, '_blank');
+    const whatsappUrl = `https://wa.me/917899940804?text=${encodeURIComponent(
+      message
+    )}`;
+    window.open(whatsappUrl, "_blank");
   };
 
   const formatItems = (items) => {
@@ -431,7 +445,9 @@ ${mapLink}`;
                 <button
                   className="sort-button"
                   onClick={toggleSortOrder}
-                  title={sortOrder === "newest" ? "Newest first" : "Oldest first"}
+                  title={
+                    sortOrder === "newest" ? "Newest first" : "Oldest first"
+                  }
                 >
                   {sortOrder === "newest" ? (
                     <>
@@ -457,15 +473,16 @@ ${mapLink}`;
                 <div className="order-id-section">
                   <div className="order-id">Order #{order._id.slice(-6)}</div>
                   <div className="order-actions">
-                    <button 
+                    <button
                       className="whatsapp-button"
                       onClick={() => handleWhatsAppClick(order)}
                       title="Send to WhatsApp"
                     >
                       <FaWhatsapp />
                     </button>
-                    {(order.status === 'delivered' || order.status === 'cancelled') && (
-                      <button 
+                    {(order.status === "delivered" ||
+                      order.status === "cancelled") && (
+                      <button
                         className="delete-button"
                         onClick={() => {
                           setSelectedOrderForDelete(order);
@@ -483,9 +500,12 @@ ${mapLink}`;
                     onChange={(event) => statusHandler(event, order._id, order)}
                     value={order.status}
                     className={`status-select status-${order.status.toLowerCase()}`}
-                    disabled={order.status === 'delivered' || order.status === 'cancelled'}
+                    disabled={
+                      order.status === "delivered" ||
+                      order.status === "cancelled"
+                    }
                   >
-                    {order.status === 'pending' ? (
+                    {order.status === "pending" ? (
                       <>
                         <option value="pending">Pending</option>
                         <option value="confirmed">Confirm Order</option>
@@ -496,7 +516,9 @@ ${mapLink}`;
                         <option value="pending">Pending</option>
                         <option value="confirmed">Confirmed</option>
                         <option value="packing">Packing</option>
-                        <option value="out-for-delivery">Out for Delivery</option>
+                        <option value="out-for-delivery">
+                          Out for Delivery
+                        </option>
                         <option value="delivered">Delivered</option>
                         <option value="cancelled">Cancelled</option>
                       </>
@@ -556,7 +578,7 @@ ${mapLink}`;
 
                   <div className="contact-info">
                     <div className="phone-number">
-                    <i className="fas fa-phone"></i> {order.address.phone}
+                      <i className="fas fa-phone"></i> {order.address.phone}
                     </div>
                     <div className="contact-buttons">
                       <button
@@ -622,12 +644,14 @@ ${mapLink}`;
         <div className="cancel-dialog-overlay">
           <div className="cancel-dialog">
             <div className="cancel-dialog-header">
-              <h3>Cancel Order #{selectedOrderForCancel.order._id.slice(-6)}</h3>
-              <button 
+              <h3>
+                Cancel Order #{selectedOrderForCancel.order._id.slice(-6)}
+              </h3>
+              <button
                 className="close-button"
                 onClick={() => {
                   setShowCancelDialog(false);
-                  setCancelReason('');
+                  setCancelReason("");
                   setSelectedOrderForCancel(null);
                 }}
               >
@@ -638,11 +662,14 @@ ${mapLink}`;
             <div className="order-summary-section">
               <div className="customer-details">
                 <p className="customer-name">
-                  {selectedOrderForCancel.order.address.firstName} {selectedOrderForCancel.order.address.lastName}
+                  {selectedOrderForCancel.order.address.firstName}{" "}
+                  {selectedOrderForCancel.order.address.lastName}
                 </p>
-                <p className="customer-phone">{selectedOrderForCancel.order.address.phone}</p>
+                <p className="customer-phone">
+                  {selectedOrderForCancel.order.address.phone}
+                </p>
               </div>
-              
+
               <div className="order-items">
                 <h4>Order Items:</h4>
                 <div className="items-list">
@@ -655,14 +682,15 @@ ${mapLink}`;
                   ))}
                 </div>
                 <div className="total-amount">
-                  Total Amount: ₹{selectedOrderForCancel.order.amount.toFixed(2)}
+                  Total Amount: ₹
+                  {selectedOrderForCancel.order.amount.toFixed(2)}
                 </div>
               </div>
             </div>
-            
+
             <div className="cancel-form">
               <label>
-                <span className="required">*</span> 
+                <span className="required">*</span>
                 Reason for Cancellation:
               </label>
               <textarea
@@ -670,31 +698,33 @@ ${mapLink}`;
                 onChange={(e) => setCancelReason(e.target.value)}
                 placeholder="Please provide a detailed reason for cancellation..."
                 rows="4"
-                className={!cancelReason.trim() ? 'error' : ''}
+                className={!cancelReason.trim() ? "error" : ""}
               />
               {!cancelReason.trim() && (
-                <span className="error-message">Cancellation reason is required</span>
+                <span className="error-message">
+                  Cancellation reason is required
+                </span>
               )}
-              
+
               <div className="cancel-note">
                 <p>
-                  <FaWhatsapp className="whatsapp-icon" />
-                  A cancellation message will be sent to the customer via WhatsApp
+                  <FaWhatsapp className="whatsapp-icon" />A cancellation message
+                  will be sent to the customer via WhatsApp
                 </p>
               </div>
-              
+
               <div className="cancel-actions">
-                <button 
+                <button
                   className="btn-cancel"
                   onClick={() => {
                     setShowCancelDialog(false);
-                    setCancelReason('');
+                    setCancelReason("");
                     setSelectedOrderForCancel(null);
                   }}
                 >
                   Back
                 </button>
-                <button 
+                <button
                   className="btn-confirm"
                   onClick={handleCancelSubmit}
                   disabled={!cancelReason.trim()}
@@ -713,7 +743,7 @@ ${mapLink}`;
           <div className="delete-dialog">
             <div className="delete-dialog-header">
               <h3>Delete Order</h3>
-              <button 
+              <button
                 className="close-button"
                 onClick={() => {
                   setShowDeleteDialog(false);
@@ -723,20 +753,29 @@ ${mapLink}`;
                 ×
               </button>
             </div>
-            
+
             <div className="delete-dialog-content">
               <div className="warning-icon">⚠️</div>
               <p>Are you sure you want to delete this order?</p>
               <div className="order-info">
-                <p><strong>Order ID:</strong> #{selectedOrderForDelete._id.slice(-6)}</p>
-                <p><strong>Status:</strong> {selectedOrderForDelete.status}</p>
-                <p><strong>Customer:</strong> {selectedOrderForDelete.address.firstName} {selectedOrderForDelete.address.lastName}</p>
+                <p>
+                  <strong>Order ID:</strong> #
+                  {selectedOrderForDelete._id.slice(-6)}
+                </p>
+                <p>
+                  <strong>Status:</strong> {selectedOrderForDelete.status}
+                </p>
+                <p>
+                  <strong>Customer:</strong>{" "}
+                  {selectedOrderForDelete.address.firstName}{" "}
+                  {selectedOrderForDelete.address.lastName}
+                </p>
               </div>
               <p className="warning-text">This action cannot be undone.</p>
             </div>
 
             <div className="delete-dialog-actions">
-              <button 
+              <button
                 className="btn-cancel"
                 onClick={() => {
                   setShowDeleteDialog(false);
@@ -745,10 +784,7 @@ ${mapLink}`;
               >
                 Cancel
               </button>
-              <button 
-                className="btn-delete"
-                onClick={handleDeleteOrder}
-              >
+              <button className="btn-delete" onClick={handleDeleteOrder}>
                 Delete Order
               </button>
             </div>

@@ -6,8 +6,8 @@ import Loading from '../Components/Loading/Loading';
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
+    const url = import.meta.env.VITE_BACKEND_URL;
     const [cartItems, setCartItems] = useState({});
-    const url = "http://localhost:4000"
     const [token, setToken] = useState(() => localStorage.getItem('token') || "")
     const [food_list, setFoodList] = useState([]);
     const [loading, setLoading] = useState(true);

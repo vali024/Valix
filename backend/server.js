@@ -221,6 +221,6 @@ app.get("/", (req, res) => {
 })
 
 app.listen(port, () => {
-    console.log(`server started on http://localhost:4000`)
+    console.log(`server started on ${process.env.VITE_BACKEND_URL}`)
 })
 
