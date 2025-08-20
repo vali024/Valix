@@ -1,21 +1,31 @@
-import { useState, useContext, useEffect } from "react";
+import React, { useState, useContext, useEffect, useRef } from "react";
 import "./Navbar.css";
-import { assets } from "../../assets/assets";
 import { Link, useLocation } from "react-router-dom";
 import { StoreContext } from "../../Context/StoreContext";
 import { NavContext } from "../../Context/NavContext";
 import { useNavigate } from "react-router-dom";
 import PropTypes from "prop-types";
+import {
+  Menu,
+  X,
+  Zap,
+  MessageCircle,
+  ShoppingCart,
+  User,
+  LogOut,
+  Package,
+} from "lucide-react";
 
 const Navbar = ({ setShowLogin }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { activeNav, setActiveNav } = useContext(NavContext);
   const { getTotalCartAmount, token, setToken } = useContext(StoreContext);
-  const [visible, setVisible] = useState(true);
-  const [showAnnouncement, setShowAnnouncement] = useState(true);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const prevScrollY = useRef(0);
 
   // Scroll to top when route changes
   useEffect(() => {
@@ -28,53 +38,47 @@ const Navbar = ({ setShowLogin }) => {
     setActiveNav(path);
   }, [location, setActiveNav]);
 
+  // Handle scroll effect for navbar background
   useEffect(() => {
-    let lastScrollPosition = window.pageYOffset;
-    let ticking = false;
-
     const handleScroll = () => {
-      const currentScrollPos = window.pageYOffset;
+      const currentScrollY = window.scrollY;
+      const isScrolled = currentScrollY > 10;
 
-      if (!ticking) {
-        window.requestAnimationFrame(() => {
-          // Show navbar when scrolling up or at the top
-          setVisible(
-            currentScrollPos < lastScrollPosition || currentScrollPos < 50
-          );
-          // Show announcement bar only at the top
-          setShowAnnouncement(currentScrollPos === 0);
-          // Update scroll position for threshold checks
-          lastScrollPosition = currentScrollPos;
-          ticking = false;
-        });
-        ticking = true;
+      // Show/hide navbar based on scroll direction
+      if (currentScrollY < 50) {
+        setIsVisible(true); // Always show navbar at the top
+      } else if (prevScrollY.current < currentScrollY) {
+        setIsVisible(false); // Scrolling down - hide navbar
+      } else {
+        setIsVisible(true); // Scrolling up - show navbar
       }
+
+      setScrolled(isScrolled);
+      prevScrollY.current = currentScrollY;
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Navigation items
+  const navItems = [
+    { name: "Home", path: "/", key: "home" },
+    { name: "Services", path: "/services", key: "services" },
+    { name: "Portfolio", path: "/portfolio", key: "portfolio" },
+    { name: "Products", path: "/shop", key: "shop" },
+    { name: "Contact", path: "/contact", key: "contact" },
+  ];
+
   const logout = () => {
     localStorage.removeItem("token");
     setToken("");
     navigate("/");
+    setIsProfileOpen(false);
   };
 
   const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
-  const handleLocationClick = () => {
-    window.open(
-      "https://www.google.com/maps/place/34%2F35%2F1+Shivam/@12.9064683,77.6744885,17z/data=!3m1!4b1!4m6!3m5!1s0x3bae1373ce0ae447:0x55a7e465cd53d825!8m2!3d12.9064683!4d77.6770634!16s%2Fg%2F11fsw2y9rs?entry=ttu&g_ep=EgoyMDI1MDUyOC4wIKXMDSoASAFQAw%3D%3D",
-      "_blank"
-    );
-  };
-
-  const handleLogoClick = (e) => {
-    e.preventDefault();
-    window.location.href = "/";
+    setIsOpen(!isOpen);
   };
 
   const toggleProfile = () => {
@@ -94,131 +98,190 @@ const Navbar = ({ setShowLogin }) => {
   }, [isProfileOpen]);
 
   return (
-    <>
-      <div className={`announcement-bar ${showAnnouncement ? "show" : "hide"}`}>
-        <div className="announcement-content">
-          <p className="discount-text">
-           Fresh organic veggies & fruits now at <strong>Chanvi Farms</strong> – grab yours today!
-          </p>
-          <p className="location-text">
-            <span className="location-icon">📍</span>
-            <strong>Location: </strong>
-            <span
-              className="address"
-              onClick={handleLocationClick}
-              role="button"
-              tabIndex={0}
+    <nav
+      className={`navbar ${scrolled ? "scrolled" : ""} ${
+        isVisible ? "visible" : "hidden"
+      }`}
+    >
+      <div className="navbar-container">
+        <div className="navbar-content">
+          {/* Logo */}
+          <Link to="/" className="navbar-logo">
+            <div className="logo-icon">
+              <Zap className="logo-zap" />
+            </div>
+            <div className="logo-text">
+              <span className="logo-main">VALIX</span>
+              <span className="logo-sub">DIGITAL SERVICES</span>
+            </div>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="navbar-menu-desktop">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                onClick={() => setActiveNav(item.key)}
+                className={`nav-link ${activeNav === item.key ? "active" : ""}`}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop Right Side */}
+          <div className="navbar-right-desktop">
+            {/* Cart */}
+            <Link to="/cart" className="cart-link">
+              <ShoppingCart className="cart-icon" />
+              {getTotalCartAmount() > 0 && <div className="cart-dot"></div>}
+            </Link>
+
+            {/* WhatsApp */}
+            <a
+              href="https://wa.me/+918919825034"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="whatsapp-btn"
             >
-              SHIVAM Mudaliyar layout,Kasavanahalli,Sarjapura road
-            </span>
-          </p>
+              <MessageCircle className="whatsapp-icon" />
+              <span>WhatsApp</span>
+            </a>
+
+            {/* Auth Section */}
+            {!token ? (
+              <button
+                onClick={() => setShowLogin(true)}
+                className="get-quote-btn"
+              >
+                Login
+              </button>
+            ) : (
+              <div className="navbar-profile" onClick={toggleProfile}>
+                <User className="profile-icon" />
+                <div
+                  className={`profile-dropdown ${isProfileOpen ? "show" : ""}`}
+                >
+                  <div
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate("/myorders");
+                      setIsProfileOpen(false);
+                    }}
+                  >
+                    <Package className="dropdown-icon" />
+                    <span>My Orders</span>
+                  </div>
+                  <div
+                    className="dropdown-item"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      logout();
+                    }}
+                  >
+                    <LogOut className="dropdown-icon" />
+                    <span>Logout</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile Menu Button */}
+          <button onClick={toggleMobileMenu} className="mobile-menu-btn">
+            {isOpen ? (
+              <X className="menu-icon" />
+            ) : (
+              <Menu className="menu-icon" />
+            )}
+          </button>
         </div>
       </div>
-      <div className={`navbar ${visible ? "navbar-visible" : "hidden"}`}>
-        <a href="/" onClick={handleLogoClick}>
-          <img src={assets.Chanvifarmlogo} alt="" className="logo" />
-        </a>
 
-        <button
-          className={`mobile-menu-button ${mobileMenuOpen ? "active" : ""}`}
-          onClick={toggleMobileMenu}
-          aria-label="Toggle menu"
-        >
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
-
-        <ul className={`navbar-menu ${mobileMenuOpen ? "active" : ""}`}>
-          {" "}
-          <Link
-            to="/"
-            onClick={() => {
-              setActiveNav("home");
-              setMobileMenuOpen(false);
-            }}
-            className={activeNav === "home" ? "active" : ""}
-          >
-            Home
-          </Link>
-          <Link
-            to="/about"
-            onClick={() => {
-              setActiveNav("about");
-              setMobileMenuOpen(false);
-            }}
-            className={activeNav === "about" ? "active" : ""}
-          >
-            About Us
-          </Link>
-          <Link
-            to="/shop"
-            onClick={() => {
-              setActiveNav("shop");
-              setMobileMenuOpen(false);
-            }}
-            className={activeNav === "shop" ? "active" : ""}
-          >
-            Shop
-          </Link>
-          <Link
-            to="/contact"
-            onClick={() => {
-              setActiveNav("contact");
-              setMobileMenuOpen(false);
-            }}
-            className={activeNav === "contact" ? "active" : ""}
-          >
-            Contact Us
-          </Link>
-        </ul>
-
-        <div className="navbar-right">
-          <div className="navbar-search-icon">
-            <Link to="/cart">
-              <img src={assets.basket_icon} alt="" />
-            </Link>
-            <div className={getTotalCartAmount() === 0 ? "" : "dot"}></div>
-          </div>
-          {!token ? (
-            <button onClick={() => setShowLogin(true)}>Sign in</button>
-          ) : (
-            <div
-              className={`navbar-profile ${isProfileOpen ? "active" : ""}`}
-              onClick={toggleProfile}
-            >
-              <img src={assets.profile_icon} alt="Profile" />
-              <ul
-                className={`nav-profile-dropdown ${
-                  isProfileOpen ? "show" : ""
+      {/* Mobile Menu */}
+      {isOpen && (
+        <div className="mobile-menu">
+          <div className="mobile-menu-content">
+            {navItems.map((item) => (
+              <Link
+                key={item.name}
+                to={item.path}
+                onClick={() => {
+                  setActiveNav(item.key);
+                  setIsOpen(false);
+                }}
+                className={`mobile-nav-link ${
+                  activeNav === item.key ? "active" : ""
                 }`}
               >
-                <li
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate("/myorders");
-                    setIsProfileOpen(false);
+                {item.name}
+              </Link>
+            ))}
+
+            <div className="mobile-menu-actions">
+              <Link
+                to="/cart"
+                className="mobile-cart-link"
+                onClick={() => setIsOpen(false)}
+              >
+                <ShoppingCart className="mobile-cart-icon" />
+                <span>Cart</span>
+                {getTotalCartAmount() > 0 && (
+                  <div className="mobile-cart-dot"></div>
+                )}
+              </Link>
+
+              <a
+                href="https://wa.me/1234567890"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mobile-whatsapp-btn"
+              >
+                <MessageCircle className="mobile-whatsapp-icon" />
+                <span>WhatsApp</span>
+              </a>
+
+              {!token ? (
+                <button
+                  onClick={() => {
+                    setShowLogin(true);
+                    setIsOpen(false);
                   }}
+                  className="mobile-get-quote-btn"
                 >
-                  <img src={assets.bag_icon} alt="Orders" />
-                  <p>My Orders</p>
-                </li>
-                <li
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    logout();
-                    setIsProfileOpen(false);
-                  }}
-                >
-                  <img src={assets.logout_icon} alt="Logout" />
-                  <p>Logout</p>
-                </li>
-              </ul>
+                  Login
+                </button>
+              ) : (
+                <div className="mobile-auth-section">
+                  <button
+                    onClick={() => {
+                      navigate("/myorders");
+                      setIsOpen(false);
+                    }}
+                    className="mobile-auth-btn"
+                  >
+                    <Package className="mobile-auth-icon" />
+                    <span>My Orders</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      logout();
+                      setIsOpen(false);
+                    }}
+                    className="mobile-auth-btn"
+                  >
+                    <LogOut className="mobile-auth-icon" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
-      </div>
-    </>
+      )}
+    </nav>
   );
 };
 
