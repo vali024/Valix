@@ -21,7 +21,6 @@ import {
   ExternalLink,
   Eye,
 } from "lucide-react";
-import axios from "axios";
 import "./Header.css";
 import "./ServiceSection.css";
 import "./WhyChooseUs.css";
@@ -34,22 +33,20 @@ import GraphicD from "../../assets/GraphicD.png";
 import Videoedit from "../../assets/Videoedit.png";
 import Content from "../../assets/Content.png";
 import valix from "../../assets/valix.png";
+import { examplePortfolio } from "../../Pages/Portfolio/Portfolio";
 
 const Header = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [currentMiddleWord, setCurrentMiddleWord] = useState(0);
-  const [portfolioItems, setPortfolioItems] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   const navigate = useNavigate();
   const headerRef = useRef(null);
-
-  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
-  const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:4000";
 
   const middleWords = [
     "Interactive",
@@ -57,6 +54,36 @@ const Header = () => {
     "Stunning",
     "Future-Ready",
     "Brand-Centric",
+  ];
+
+  const testimonials = [
+    {
+      name: "Sarah Johnson",
+      role: "CEO, TechStart",
+      content:
+        "DigitalCraft transformed our vision into a stunning website. Their attention to detail and professionalism exceeded our expectations.",
+      rating: 5,
+      image:
+        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      name: "Michael Chen",
+      role: "Marketing Director",
+      content:
+        "The social media management service boosted our engagement by 300%. Incredible results and fantastic communication throughout.",
+      rating: 5,
+      image:
+        "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
+    {
+      name: "Emily Rodriguez",
+      role: "Small Business Owner",
+      content:
+        "From logo design to website development, they handled everything perfectly. Our brand looks amazing and professional now.",
+      rating: 5,
+      image:
+        "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400",
+    },
   ];
 
   useEffect(() => {
@@ -86,36 +113,18 @@ const Header = () => {
     return () => clearInterval(interval);
   }, [middleWords.length]);
 
-  // Fetch portfolio items when the component mounts or category changes
+  // Use exported examplePortfolio from Portfolio page
   useEffect(() => {
-    const fetchPortfolioItems = async () => {
-      try {
-        setLoading(true);
-        const url =
-          selectedCategory === "All"
-            ? `${API_URL}/portfolio`
-            : `${API_URL}/portfolio?category=${selectedCategory}`;
+    setLoading(true);
+    setTimeout(() => {
+      const filteredItems = selectedCategory === "All"
+        ? examplePortfolio
+        : examplePortfolio.filter(item => item.category === selectedCategory);
+      setPortfolioItems(filteredItems);
+      setLoading(false);
+    }, 200);
+  }, [selectedCategory]);
 
-        console.log("Fetching portfolio from:", url);
-        const response = await axios.get(url);
-
-        if (!response.data || !response.data.data) {
-          throw new Error("Invalid response format from server");
-        }
-
-        console.log("Portfolio items received:", response.data.data);
-        console.log("First item image path:", response.data.data[0]?.image);
-        setPortfolioItems(response.data.data.slice(0, 5)); // Only show first 5 items
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching portfolio items:", err);
-        setError("Failed to load portfolio items");
-        setLoading(false);
-      }
-    };
-
-    fetchPortfolioItems();
-  }, [selectedCategory, API_URL]);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -249,36 +258,6 @@ const Header = () => {
       icon: Users,
       title: "Multi-skilled Team",
       description: "Expert professionals in every field",
-    },
-  ];
-
-  const testimonials = [
-    {
-      name: "Sarah Johnson",
-      role: "CEO, TechStart",
-      content:
-        "DigitalCraft transformed our vision into a stunning website. Their attention to detail and professionalism exceeded our expectations.",
-      rating: 5,
-      image:
-        "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      name: "Michael Chen",
-      role: "Marketing Director",
-      content:
-        "The social media management service boosted our engagement by 300%. Incredible results and fantastic communication throughout.",
-      rating: 5,
-      image:
-        "https://images.pexels.com/photos/1043471/pexels-photo-1043471.jpeg?auto=compress&cs=tinysrgb&w=400",
-    },
-    {
-      name: "Emily Rodriguez",
-      role: "Small Business Owner",
-      content:
-        "From logo design to website development, they handled everything perfectly. Our brand looks amazing and professional now.",
-      rating: 5,
-      image:
-        "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=400",
     },
   ];
 
@@ -564,126 +543,92 @@ const Header = () => {
             </div>
           ) : (
             <div className="portfolio-display-grid">
-              {portfolioItems.map((item) => (
-                <div key={item._id} className="portfolio-display-card">
-                  <div className="portfolio-display-category">
-                    {item.category}
-                  </div>
-                  <div className="portfolio-display-image">
-                    {item.mediaType === "video" ? (
-                      <video
-                        src={
-                          item.image.startsWith("http")
-                            ? item.image
-                            : `${BASE_URL}${item.image}`
-                        }
-                        alt={item.title}
-                        controls
-                        onError={(e) => {
-                          console.error(
-                            "Video load error for:",
-                            item.title,
-                            "URL:",
-                            e.target.src
-                          );
-                          // Create a placeholder div for failed videos
-                          const placeholder = document.createElement("div");
-                          placeholder.className = "media-placeholder";
-                          placeholder.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f1f5f9; color: #64748b;">Video not available</div>`;
-                          e.target.parentNode.replaceChild(
-                            placeholder,
-                            e.target
-                          );
-                        }}
-                      />
-                    ) : (
-                      <img
-                        src={
-                          item.image.startsWith("http")
-                            ? item.image
-                            : `${BASE_URL}${item.image}`
-                        }
-                        alt={item.title}
-                        onError={(e) => {
-                          console.error(
-                            "Image load error for:",
-                            item.title,
-                            "URL:",
-                            e.target.src
-                          );
-                          // Try alternative URL formats
-                          const originalSrc = e.target.src;
-                          if (!originalSrc.includes("/images/")) {
-                            // Try with /images/ prefix (alternative static route)
-                            const imagePath = item.image.replace(
-                              "/uploads/",
-                              ""
-                            );
-                            e.target.src = `${BASE_URL}/images/${imagePath}`;
-                          } else {
-                            // Final fallback to placeholder
-                            e.target.src =
-                              "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjIyMCIgdmlld0JveD0iMCAwIDQwMCAyMjAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI0MDAiIGhlaWdodD0iMjIwIiBmaWxsPSIjRjFGNUY5Ii8+Cjx0ZXh0IHg9IjIwMCIgeT0iMTEwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNjQ3NDhCIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTYiPkltYWdlIE5vdCBGb3VuZDwvdGV4dD4KPC9zdmc+";
-                          }
-                        }}
-                        onLoad={() => {
-                          console.log(
-                            "Image loaded successfully for:",
-                            item.title
-                          );
-                        }}
-                      />
-                    )}
-                    <div className="portfolio-display-overlay">
-                      <div className="portfolio-display-actions">
-                        {item.websiteUrl && (
-                          <button
-                            className="portfolio-display-action"
-                            onClick={() =>
-                              window.open(item.websiteUrl, "_blank")
-                            }
-                          >
-                            <ExternalLink size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="portfolio-display-content">
-                    <h3 className="portfolio-display-title">{item.title}</h3>
-                    <p className="portfolio-display-description">
-                      {item.description}
-                    </p>
-                    <div className="portfolio-display-tags">
-                      {item.tags.slice(0, 3).map((tag, index) => (
-                        <span key={index} className="portfolio-display-tag">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                    <div className="portfolio-display-client">
-                      <span className="portfolio-display-client-label">
-                        Client:
-                      </span>{" "}
-                      {item.client}
-                    </div>
-                  </div>
-                </div>
+              {portfolioItems.slice(0, 5).map((item, idx) => (
+                 <div key={item.id || item._id || idx} className="portfolio-display-card">
+                   <div className="portfolio-display-category">
+                     {item.category}
+                   </div>
+                   <div className="portfolio-display-image">
+                     {item.mediaType === "video" ? (
+                       <video
+                         src={item.image}
+                         alt={item.title}
+                         controls
+                         onError={(e) => {
+                           console.error("Video load error for:", item.title, "URL:", e.target.src);
+                           const placeholder = document.createElement("div");
+                           placeholder.className = "media-placeholder";
+                           placeholder.innerHTML = `<div style="display: flex; align-items: center; justify-content: center; height: 100%; background: #f1f5f9; color: #64748b;">Video not available</div>`;
+                           if (e.target && e.target.parentNode) {
+                             e.target.parentNode.replaceChild(placeholder, e.target);
+                           }
+                         }}
+                       />
+                     ) : (
+                       <img
+                         src={item.image}
+                         alt={item.title}
+                         onError={(e) => {
+                           console.error("Image load error for:", item.title, "URL:", e.target.src);
+                           e.target.src = "https://via.placeholder.com/400x220?text=Image+Not+Found";
+                         }}
+                         onLoad={() => {
+                           console.log("Image loaded successfully for:", item.title);
+                         }}
+                       />
+                     )}
+                     <div className="portfolio-display-overlay">
+                       <div className="portfolio-display-actions">
+                         {item.websiteUrl && (
+                           <button
+                             className="portfolio-display-action"
+                             onClick={() =>
+                               window.open(item.websiteUrl, "_blank")
+                             }
+                           >
+                             <ExternalLink size={16} />
+                           </button>
+                         )}
+                       </div>
+                     </div>
+                   </div>
+                   <div className="portfolio-display-content">
+                     <h3 className="portfolio-display-title">{item.title}</h3>
+                     <p className="portfolio-display-description">
+                       {item.description}
+                     </p>
+                     <div className="portfolio-display-tags">
+                       {(item.tags || item.technologies || []).slice(0, 3).map((tag, index) => (
+                         <span key={index} className="portfolio-display-tag">
+                           {tag}
+                         </span>
+                       ))}
+                     </div>
+                     <div className="portfolio-display-client">
+                       <span className="portfolio-display-client-label">
+                         Client:
+                       </span>{" "}
+                       {item.client}
+                     </div>
+                   </div>
+                 </div>
               ))}
 
-              <div
-                className="portfolio-display-view-all"
-                onClick={() => {
-                  window.scrollTo({ top: 0, behavior: "smooth" });
-                  navigate("/portfolio");
-                }}
-              >
-                <div className="portfolio-display-view-all-content">
-                  <ArrowRight size={24} />
-                  <h3>View All Projects</h3>
-                  <p>Explore our complete portfolio</p>
+              {portfolioItems.length > 5 && (
+                <div
+                  className="portfolio-display-view-all"
+                  onClick={() => {
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    navigate("/portfolio");
+                  }}
+                >
+                  <div className="portfolio-display-view-all-content">
+                    <ArrowRight size={24} />
+                    <h3>View All Projects</h3>
+                    <p>Explore our complete portfolio</p>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

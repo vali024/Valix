@@ -1,86 +1,75 @@
-import { useContext, useState, useEffect, memo } from 'react'
-import PropTypes from 'prop-types'
-import "./FoodItem.css"
-import { StoreContext } from '../../Context/StoreContext'
+import { useContext, useState, memo } from "react";
+import PropTypes from "prop-types";
+import "./FoodItem.css";
+import { StoreContext } from "../../Context/StoreContext";
 
 const FoodItemComponent = ({
-  id, 
-  name, 
+  id,
+  name,
   prices,
-  marketPrices, 
-  description, 
-  image, 
-  quantityOptions, 
+  marketPrices,
+  description,
+  image,
+  quantityOptions,
   status,
+  rating,
+  reviewCount,
   isExpanded,
-  onExpand
+  onExpand,
 }) => {
-  const {cartItems, addToCart, removeFromCart, url} = useContext(StoreContext)
-  const [selectedQuantity, setSelectedQuantity] = useState(() => {
-    // Find first available quantity option
-    const firstAvailable = Object.entries(quantityOptions || {})
-      .find(([, isEnabled]) => isEnabled)
-    return firstAvailable ? firstAvailable[0] : 'g250'
-  })
+  const { cartItems, addToCart, removeFromCart, url } =
+    useContext(StoreContext);
   
-  // Update selected quantity if current selection becomes unavailable
-  useEffect(() => {
-    if (!quantityOptions?.[selectedQuantity]) {
-      const firstAvailable = Object.entries(quantityOptions || {})
-        .find(([, isEnabled]) => isEnabled)
-      if (firstAvailable) {
-        setSelectedQuantity(firstAvailable[0])
-      }
-    }
-  }, [quantityOptions, selectedQuantity])
+  // Find the default quantity option (first available)
+  const defaultQuantity = Object.entries(quantityOptions || {})
+    .find(([, isEnabled]) => isEnabled)?.[0] || "g250";
   
-  const cartKey = `${id}_${selectedQuantity}`
-  const cartItem = cartItems[cartKey]
-  
-  const availableQuantities = Object.entries(quantityOptions || {})
-    .filter(([, isEnabled]) => isEnabled)
-    .map(([key]) => ({
-      value: key,
-      label: key === 'g250' ? '250 gm' : key === 'g500' ? '500 gm' : '1 kg'
-    }));
+  const cartKey = `${id}_${defaultQuantity}`;
+  const cartItem = cartItems[cartKey];
 
-  const currentPrice = prices?.[selectedQuantity] || 0;
-  const currentMarketPrice = marketPrices?.[selectedQuantity] || currentPrice;
+  const currentPrice = prices?.[defaultQuantity] || 0;
+  const currentMarketPrice = marketPrices?.[defaultQuantity] || currentPrice;
 
   const handleAddToCart = () => {
-    if (status !== 'in-stock') return;
-    addToCart(id, selectedQuantity);
+    if (status !== "in-stock") return;
+    addToCart(id, defaultQuantity);
   };
 
   const handleQuantityChange = (action) => {
-    if (action === 'increase') {
-      addToCart(id, selectedQuantity);
+    if (action === "increase") {
+      addToCart(id, defaultQuantity);
     } else {
-      removeFromCart(id, selectedQuantity);
+      removeFromCart(id, defaultQuantity);
     }
   };
 
   const getStatusDisplay = () => {
-    switch(status) {
-      case 'out-of-stock':
-        return 'Out of Stock';
-      case 'coming-soon':
-        return 'Coming Soon...';
+    switch (status) {
+      case "out-of-stock":
+        return "Out of Stock";
+      case "coming-soon":
+        return "Coming Soon...";
       default:
         return null;
     }
   };
 
   return (
-    <div className={`food-item ${status !== 'in-stock' ? 'disabled' : ''} ${isExpanded ? 'expanded' : ''}`}>
+    <div
+      className={`food-item ${status !== "in-stock" ? "disabled" : ""} ${
+        isExpanded ? "expanded" : ""
+      }`}
+    >
       <div className="food-item-img-container">
-        <img 
-          className={`food-item-image ${status !== 'in-stock' ? 'grayscale' : ''}`}
-          src={`${url}/images/${image}`} 
+        <img
+          className={`food-item-image ${
+            status !== "in-stock" ? "grayscale" : ""
+          }`}
+          src={`${url}/images/${image}`}
           alt={name}
           loading="lazy"
         />
-        {status !== 'in-stock' && (
+        {status !== "in-stock" && (
           <div className="status-badge">{getStatusDisplay()}</div>
         )}
       </div>
@@ -89,15 +78,15 @@ const FoodItemComponent = ({
         <div className="product-header">
           <h3>{name}</h3>
           {description && (
-            <button 
+            <button
               className="expand-button"
               onClick={(e) => {
                 e.stopPropagation();
                 onExpand();
               }}
-              aria-label={isExpanded ? 'Collapse details' : 'Expand details'}
+              aria-label={isExpanded ? "Collapse details" : "Expand details"}
             >
-              <i className={`fas fa-chevron-${isExpanded ? 'up' : 'down'}`}></i>
+              <i className={`fas fa-chevron-${isExpanded ? "up" : "down"}`}></i>
             </button>
           )}
         </div>
@@ -109,7 +98,7 @@ const FoodItemComponent = ({
         <div className="price-section">
           <div className="price-header">
             <span className="label">Price</span>
-            <span className="label quantity-label">Quantity</span>
+            <span className="label rating-label">Rating</span>
           </div>
           <div className="price-content">
             <div className="price-info">
@@ -119,54 +108,51 @@ const FoodItemComponent = ({
               <p className="our-price">₹{currentPrice}</p>
               {currentMarketPrice > currentPrice && (
                 <span className="discount">
-                  {Math.round(((currentMarketPrice - currentPrice) / currentMarketPrice) * 100)}% OFF
+                  {Math.round(
+                    ((currentMarketPrice - currentPrice) / currentMarketPrice) *
+                      100
+                  )}
+                  % OFF
                 </span>
               )}
             </div>
-            
-            <select 
-              value={selectedQuantity}
-              onChange={(e) => {
-                setSelectedQuantity(e.target.value);
-                // Reset cart item when changing quantity
-                if (cartItem) {
-                  for (let i = 0; i < cartItem.quantity; i++) {
-                    removeFromCart(id, selectedQuantity);
-                  }
-                }
-              }}
-              className="quantity-select"
-              disabled={status !== 'in-stock'}
-            >
-              {availableQuantities.map(({value, label}) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
+
+            <div className="product-rating">
+              <div className="stars">
+                {[...Array(5)].map((_, i) => (
+                  <i 
+                    key={i} 
+                    className={`fas fa-star ${i < Math.floor(rating || 0) ? "filled" : ""}`}
+                  ></i>
+                ))}
+              </div>
+              <span className="rating-count">({rating ? rating.toFixed(1) : '0.0'}) • {reviewCount || 0} reviews</span>
+            </div>
           </div>
         </div>
 
         <div className="cart-actions">
           {!cartItem ? (
-            <button 
+            <button
               className="add-to-cart-btn"
               onClick={handleAddToCart}
-              disabled={status !== 'in-stock'}
+              disabled={status !== "in-stock"}
             >
               <i className="fas fa-shopping-cart"></i>
-              {status === 'in-stock' ? 'Add to Cart' : getStatusDisplay()}
+              {status === "in-stock" ? "Add to Cart" : getStatusDisplay()}
             </button>
           ) : (
             <div className="quantity-controls">
-              <button 
+              <button
                 className="quantity-btn decrease"
-                onClick={() => handleQuantityChange('decrease')}
+                onClick={() => handleQuantityChange("decrease")}
               >
                 <i className="fas fa-minus"></i>
               </button>
               <span className="quantity-display">{cartItem.quantity}</span>
-              <button 
+              <button
                 className="quantity-btn increase"
-                onClick={() => handleQuantityChange('increase')}
+                onClick={() => handleQuantityChange("increase")}
               >
                 <i className="fas fa-plus"></i>
               </button>
@@ -175,8 +161,8 @@ const FoodItemComponent = ({
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 FoodItemComponent.propTypes = {
   id: PropTypes.string.isRequired,
@@ -187,18 +173,22 @@ FoodItemComponent.propTypes = {
   image: PropTypes.string.isRequired,
   quantityOptions: PropTypes.object,
   status: PropTypes.string,
+  rating: PropTypes.number,
+  reviewCount: PropTypes.number,
   isExpanded: PropTypes.bool,
-  onExpand: PropTypes.func
-}
+  onExpand: PropTypes.func,
+};
 
 FoodItemComponent.defaultProps = {
-  status: 'in-stock',
+  status: "in-stock",
   quantityOptions: { g250: true },
   prices: { g250: 0 },
   marketPrices: { g250: 0 },
+  rating: 0,
+  reviewCount: 0,
   isExpanded: false,
-  onExpand: () => {}
-}
+  onExpand: () => {},
+};
 
 const FoodItem = memo(FoodItemComponent);
-export default FoodItem
+export default FoodItem;

@@ -20,7 +20,7 @@ import cont from "../../assets/Content.png";
 
 
 // Example portfolio data
-const examplePortfolio = [
+export const examplePortfolio = [
   {
     id: "1",
     title: "Restaurant Landing Page",
