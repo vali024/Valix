@@ -656,6 +656,111 @@ const Contact = () => {
     },
   ];
 
+  // helper: upload files to backend and return array [{ originalName, url }]
+  const uploadFilesToServer = async (files) => {
+    if (!files || files.length === 0) return [];
+    try {
+      const uploadForm = new FormData();
+      files.forEach((f) => uploadForm.append("files", f));
+      const resp = await fetch(`${import.meta.env.VITE_BACKEND_URL || ""}/api/contact/upload`, {
+        method: "POST",
+        body: uploadForm,
+      });
+      if (!resp.ok) {
+        showToast("File upload failed", "error");
+        return [];
+      }
+      const json = await resp.json();
+      if (json.success && Array.isArray(json.files)) return json.files;
+      return [];
+    } catch (err) {
+      console.error("uploadFilesToServer error", err);
+      showToast("Upload error", "error");
+      return [];
+    }
+  };
+
+  // detect mobile devices for conditional UI/behavior
+  const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  // WhatsApp share handler: native share (with files) preferred, fallback to wa.me with uploaded links
+  const handleWhatsAppShare = async (e) => {
+    e && e.preventDefault();
+    if (!validateForm()) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 600);
+      return;
+    }
+
+    setIsLoading(true);
+    showToast("Preparing WhatsApp message...", "info");
+
+    const subject = `Project Inquiry: ${formData.service || "General"}`;
+    let messageText = `*${subject}*\n\n`;
+    messageText += `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nService: ${formData.service}\nBudget: ${formData.budget}\n\n`;
+    messageText += `Project Description:\n${formData.message}\n\n`;
+
+    try {
+      // 1) Try native share on mobile with files
+      if (formData.files && formData.files.length > 0 && isMobile()) {
+        try {
+          if (navigator.canShare && navigator.canShare({ files: formData.files })) {
+            await navigator.share({ title: subject, text: messageText, files: formData.files });
+            showToast("Shared using device share sheet. Choose WhatsApp to send.", "success");
+            setIsSubmitted(true);
+            setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
+            setIsLoading(false);
+            return;
+          }
+        } catch (err) {
+          console.warn("navigator.share failed:", err);
+        }
+      }
+
+      // 2) Upload files to server (if any) to include public URLs
+      let uploadedFiles = [];
+      if (formData.files && formData.files.length > 0) {
+        showToast("Uploading files...", "info");
+        uploadedFiles = await uploadFilesToServer(formData.files);
+      }
+
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        messageText += `Attached files:\n`;
+        uploadedFiles.forEach((f, i) => {
+          messageText += `${i + 1}. ${f.originalName} - ${f.url}\n`;
+        });
+      } else if (formData.files && formData.files.length > 0) {
+        messageText += `Files selected: ${formData.files.map((f) => f.name).join(", ")}\n`;
+      }
+
+      // 3) Open WhatsApp (app on mobile, web on desktop)
+      const whatsappNumber = "918919825034";
+      const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(messageText)}`;
+
+      if (isMobile()) {
+        window.location.href = waUrl;
+      } else {
+        const win = window.open(waUrl, "_blank", "noopener");
+        if (!win) {
+          showToast("Popup blocked. Please allow popups for this site.", "error");
+          setIsLoading(false);
+          return;
+        }
+        try { win.focus(); } catch {}
+      }
+
+      showToast("WhatsApp opened. Review message and send.", "success");
+      setIsSubmitted(true);
+      setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
+      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 300);
+    } catch (err) {
+      console.error("handleWhatsAppShare error", err);
+      showToast("Error preparing WhatsApp message. Try again.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="contact-page-root">
       {/* Toast Notification */}
@@ -899,25 +1004,41 @@ const Contact = () => {
                   )}
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className={`contact-page-root__submit-btn ${
-                    isLoading ? "loading" : ""
-                  }`}
-                >
-                  {isLoading ? (
-                    <>
-                      <div className="contact-page-root__loading-spinner"></div>
-                      <span>Opening Gmail...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Mail />
-                      <span>Send via Gmail</span>
-                    </>
+                <div className="contact-page-root__submit-group" style={{ marginTop: 12 }}>
+                  {/* Gmail button hidden on mobile by conditional render */}
+                  {!isMobile() && (
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className={`contact-page-root__submit-btn ${isLoading ? "loading" : ""}`}
+                      aria-label="Send via Gmail"
+                    >
+                      {isLoading ? (
+                        <>
+                          <div className="contact-page-root__loading-spinner"></div>
+                          <span>Opening Gmail...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Mail />
+                          <span>Send via Gmail</span>
+                        </>
+                      )}
+                    </button>
                   )}
-                </button>
+
+                  <button
+                    type="button"
+                    onClick={handleWhatsAppShare}
+                    disabled={isLoading}
+                    className="contact-page-root__whatsapp-btn"
+                    aria-label="Send via WhatsApp"
+                    style={{ flex: isMobile() ? '1 1 100%' : undefined }}
+                  >
+                    <MessageCircle />
+                    <span>Send via WhatsApp</span>
+                  </button>
+                </div>
 
                 <p className="contact-page-root__form-disclaimer">
                   By submitting this form, you agree to our privacy policy and
