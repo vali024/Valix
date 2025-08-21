@@ -1,186 +1,161 @@
-import "./Footer.css";
-import { assets } from "../../assets/assets";
+import React from "react";
 import { Link } from "react-router-dom";
+import {
+  Zap,
+  MessageCircle,
+  Mail,
+  Phone,
+  MapPin,
+  Facebook,
+  Instagram,
+  Linkedin,
+  Twitter,
+} from "lucide-react";
+import "./Footer.css";
 
 const Footer = () => {
   return (
-    <div className="footer" id="footer">
-      <div className="cta-section">
-        <div className="cta-box">
-          <div className="cta-container">
-            <div className="cta-content-left">
-              <Link to="/">
-                <img
-                  src={assets.Chanvifarmlogo}
-                  alt="Chanvi Farms Logo"
-                  className="logo"
-                />
-              </Link>
-              <p>
-                Your trusted source for farm-fresh produce, delivered right to
-                your doorstep with care and quality.
-              </p>
+    <footer className="footer-container">
+      <div className="footer-content-wrapper">
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <div className="brand-header">
+              <div className="brand-icon-container">
+                <Zap className="brand-icon" />
+              </div>
+              <span className="brand-name">Valix Digital</span>
             </div>
-            <div className="cta-image">
-              <img src="/src/assets/delivery.jpg" alt="Fresh delivery" />
-              <div className="cta-content">
-                <h2>Farm Fresh Delivery At your doorstep!</h2>
-                <a href="tel:+919900088164" className="cta-button">
-                  <i className="fas fa-phone"></i>
-                  Call Now
+            <p className="brand-description">
+              Your one-stop agency for everything digital — fast, affordable &
+              high quality. We build stunning websites, mobile apps, designs &
+              edits.
+            </p>
+            <div className="social-links">
+              <a
+                href="https://www.facebook.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-link facebook"
+              >
+                <Facebook className="social-icon" />
+              </a>
+              <a
+                href="https://www.instagram.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-link instagram"
+              >
+                <Instagram className="social-icon" />
+              </a>
+              <a
+                href="https://www.linkedin.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-link linkedin"
+              >
+                <Linkedin className="social-icon" />
+              </a>
+              <a
+                href="https://twitter.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="social-link twitter"
+              >
+                <Twitter className="social-icon" />
+              </a>
+            </div>
+          </div>
+
+          <div className="footer-links">
+            <h3 className="footer-heading">Quick Links</h3>
+            <ul className="footer-nav-list">
+              {[
+                { name: "Home", path: "/" },
+                { name: "Services", path: "/services" },
+                { name: "Portfolio", path: "/portfolio" },
+                { name: "Products", path: "/shop" },
+                { name: "Contact", path: "/contact" },
+              ].map((item) => (
+                <li key={item.name} className="footer-nav-item">
+                  <Link to={item.path} className="footer-nav-link">
+                    {item.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="footer-services">
+            <h3 className="footer-heading">Services</h3>
+            <ul className="footer-nav-list">
+              {[
+                { name: "Web Development", path: "/services#web-development" },
+                { name: "Mobile Apps", path: "/services#mobile-apps" },
+                { name: "Graphic Design", path: "/services#graphic-design" },
+                { name: "Video Editing", path: "/services#video-editing" },
+                { name: "Social Media", path: "/services#social-media" },
+              ].map((service) => (
+                <li key={service.name} className="footer-nav-item">
+                  <Link to={service.path} className="footer-nav-link">
+                    {service.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="footer-contact">
+            <h3 className="footer-heading">Contact Info</h3>
+            <div className="contact-details">
+              <div className="contact-item">
+                <Phone className="contact-icon" />
+                <a href="tel:+918919825034" className="contact-text">
+                  +91 8919825034
                 </a>
               </div>
+              <div className="contact-item">
+                <Mail className="contact-icon" />
+                <a
+                  href="mailto:lovelyboyarun91@gmail.com"
+                  className="contact-text"
+                >
+                  lovelyboyarun91@gmail.com
+                </a>
+              </div>
+              <div className="contact-item">
+                <MapPin className="contact-icon" />
+                <span className="contact-text"> Bengaluru, India</span>
+              </div>
+              <a
+                href="https://wa.me/+918919825034"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="whatsapp-button"
+              >
+                <MessageCircle className="whatsapp-icon" />
+                <span>WhatsApp Us</span>
+              </a>
             </div>
           </div>
         </div>
-      </div>
 
-      <div className="footer-content">
-        <div className="footer-content-left">
-          <div className="footer-intro">
-            <h2>Connect With Us</h2>
-            <p>
-              Follow us on social media for updates, tips, and fresh produce
-              inspiration!
-            </p>
-          </div>
-          <div className="footer-social-icons">
-            <a
-              href="https://www.facebook.com/profile.php?id=61577107853807"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-icon"
-            >
-              <i className="fab fa-facebook-f"></i>
-            </a>
-            <a
-              href="https://x.com/ChanviFarm9"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-icon"
-            >
-              <i className="fab fa-twitter"></i>
-            </a>
-            <a
-              href="https://www.instagram.com/chanvifarms9/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-icon"
-            >
-              <i className="fab fa-instagram"></i>
-            </a>
-          </div>
-        </div>
-
-        <div className="footer-content-center">
-          <div className="footer-section">
-            <h2>Categories</h2>
-            <ul>
-              <li>
-                <Link to="/shop?category=vegetables">
-                  <i className="fas fa-chevron-right"></i> Vegetables
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=fruits">
-                  <i className="fas fa-chevron-right"></i> Fruits
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=exotic vegetables">
-                  <i className="fas fa-chevron-right"></i> Exotic Vegetables
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=exotic fruits">
-                  <i className="fas fa-chevron-right"></i> Exotic Fruits
-                </Link>
-              </li>
-              <li>
-                <Link to="/shop?category=meat">
-                  <i className="fas fa-chevron-right"></i> Meat
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="footer-section">
-            <h2>Quick Links</h2>
-            <ul>
-              <li>
-                <Link to="/about">
-                  <i className="fas fa-chevron-right"></i> About Us
-                </Link>
-              </li>
-              <li>
-                <Link to="/contact">
-                  <i className="fas fa-chevron-right"></i> Contact Us
-                </Link>
-              </li>{" "}
-              <li>
-                <Link to="/terms">
-                  <i className="fas fa-chevron-right"></i> Terms & Conditions
-                </Link>
-              </li>
-              <li>
-                <Link to="/privacy">
-                  <i className="fas fa-chevron-right"></i> Privacy Policy
-                </Link>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-content-right">
-          <h2>Contact Us</h2>
-          <ul>
-            <li>
-              <i className="fas fa-map-marker-alt"></i>
-              <span>
-                Shop Address - 34/35/1,SHIVAM Mudaliyar
-                layout,Kasavanahalli,Sarjapura road,Bangalore-560035
-              </span>
-            </li>
-            <li>
-              <i className="fas fa-phone"></i>
-              <a href="tel:+919900088164">+91 9900088164</a>
-            </li>
-            <li>
-              <i className="fas fa-envelope"></i>
-              <a href="mailto:chanvifarms9@gmail.com">
-                chanvifarms9@gmail.com
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <div className="footer-bottom">
-        <hr />
-        <p className="footer-copyright">
-          Copyright © {new Date().getFullYear()} Chanvi Farms - All Rights
-          Reserved
-        </p>
-        <div className="footer-terms">
-          <Link to="/terms">Terms of Service</Link>
-          <span className="separator">|</span>
-          <Link to="/privacy">Privacy Policy</Link>
-        </div>
-        <div className="footer-attribution">
-          <p className="credit-text">
-            Designed with <i className="fas fa-heart"></i> by
+        <div className="footer-bottom">
+          <p className="copyright-text">
+            © {new Date().getFullYear()} Valix Digital. All rights reserved.
+            Built with passion for digital excellence.
           </p>
-          <a
-            href="https://vali024.github.io/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="designer-link"
-          >
-            <span className="designer-name">Vali</span>
-            <i className="fas fa-external-link-alt link-icon"></i>
-          </a>
+          <div className="footer-terms-links">
+            <Link to="/terms" className="terms-link">
+              Terms of Service
+            </Link>
+            <span className="terms-separator">|</span>
+            <Link to="/privacy" className="terms-link">
+              Privacy Policy
+            </Link>
+          </div>
         </div>
       </div>
-    </div>
+    </footer>
   );
 };
 
