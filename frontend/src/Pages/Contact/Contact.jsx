@@ -491,15 +491,63 @@ const Contact = () => {
 
     setIsLoading(true);
 
+    // Prepare subject/body
+    const subject = `Project Inquiry: ${formData.service || "General"}`;
+    let bodyText = `Dear Team,\n\nPlease find my project inquiry details below:\n\n`;
+    bodyText += `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nService: ${formData.service}\nBudget: ${formData.budget}\n\n`;
+    bodyText += `Project Description:\n${formData.message}\n\n`;
+    bodyText += `Best regards,\n${formData.name}`;
+
+    // Try native share (mobile) when files exist and browser supports it
+    const tryNativeShare = async () => {
+      if (!formData.files || formData.files.length === 0) return false;
+      if (!navigator || !navigator.canShare || !navigator.share) return false;
+
+      // navigator.canShare expects a { files } object
+      try {
+        const sharePayload = { title: subject, text: bodyText, files: formData.files };
+        if (navigator.canShare && navigator.canShare({ files: formData.files })) {
+          await navigator.share(sharePayload);
+          return true;
+        }
+      } catch (err) {
+        console.warn("Native share failed:", err);
+        return false;
+      }
+      return false;
+    };
+
     try {
-      // Upload files (if any) to backend to make them downloadable via public URLs
+      // If files present try native share first (works on many mobile browsers / Gmail app)
+      if (formData.files && formData.files.length > 0) {
+        const didShareNatively = await tryNativeShare();
+        if (didShareNatively) {
+          showToast("Shared to native app (choose Gmail).", "success");
+
+          // scroll form success into view and finalize
+          setTimeout(() => {
+            const el = document.querySelector(".contact-page-root__form-container") || document.querySelector(".contact-page-root");
+            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+            else window.scrollTo({ top: 0, behavior: "smooth" });
+          }, 300);
+
+          setIsSubmitted(true);
+          setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
+          setIsLoading(false);
+          return;
+        }
+        // if native share not available/fails, continue to upload-fallback -> Gmail web compose
+        showToast("Native share unavailable — using Gmail web compose fallback.", "warning");
+      }
+
+      // Upload files (if any) to backend to make downloadable links (fallback)
       let uploadedFiles = [];
       if (formData.files && formData.files.length > 0) {
         const uploadForm = new FormData();
-        formData.files.forEach((f) => uploadForm.append('files', f));
+        formData.files.forEach((f) => uploadForm.append("files", f));
 
-        const uploadResp = await fetch(`${import.meta.env.VITE_BACKEND_URL || ''}/api/contact/upload`, {
-          method: 'POST',
+        const uploadResp = await fetch(`${import.meta.env.VITE_BACKEND_URL || ""}/api/contact/upload`, {
+          method: "POST",
           body: uploadForm,
         });
 
@@ -509,56 +557,52 @@ const Contact = () => {
             uploadedFiles = uploadResult.files; // each has url, originalName
           }
         } else {
-          showToast('File upload failed. You can still send the email but attachments will not be included as links.', 'warning');
+          showToast("File upload failed. Email will open without attachment links.", "warning");
         }
       }
 
-      // Construct email body
-      let emailBody = `Dear Team,\n\nPlease find my project inquiry details below:\n\n`;
-      emailBody += `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nService: ${formData.service}\nBudget: ${formData.budget}\n\n`;
-      emailBody += `Project Description:\n${formData.message}\n\n`;
-
+      // Append uploaded links or filenames to email body
       if (uploadedFiles.length > 0) {
-        emailBody += `Files uploaded (click links to download):\n`;
+        bodyText += `\nFiles uploaded (click links to download):\n`;
         uploadedFiles.forEach((f, i) => {
-          emailBody += `${i + 1}. ${f.originalName} - ${f.url}\n`;
+          bodyText += `${i + 1}. ${f.originalName} - ${f.url}\n`;
         });
-        emailBody += `\n`;
       } else if (formData.files && formData.files.length > 0) {
-        emailBody += `Files attached: ${formData.files.map((f) => f.name).join(', ')}\n\n`;
+        bodyText += `\nFiles attached: ${formData.files.map((f) => f.name).join(", ")}\n`;
       }
 
-      emailBody += `Best regards,\n${formData.name}`;
+      // Open Gmail compose (web)
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
+        "lovelyboyarun91@gmail.com"
+      )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
 
-      // Open Gmail compose window with body including file links
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent('lovelyboyarun91@gmail.com')}&su=${encodeURIComponent('Project Inquiry: ' + formData.service)}&body=${encodeURIComponent(emailBody)}`;
-
-      const win = window.open(gmailUrl, '_blank', 'noopener');
+      const win = window.open(gmailUrl, "_blank", "noopener");
       if (!win) {
-        showToast('Popup blocked. Please allow popups for this site.', 'error');
+        showToast("Popup blocked. Please allow popups for this site.", "error");
       } else {
-        try { win.focus(); } catch (e) {}
-        showToast('Gmail compose opened. Download links (if any) are included in the message body.', 'success');
+        try {
+          win.focus();
+        } catch (err) {}
+        showToast("Gmail compose opened. Attachments (if uploaded) are included as links.", "success");
       }
 
       // ensure contact form / success message is visible at top of page when user returns
       setTimeout(() => {
-        const el = document.querySelector('.contact-page-root__form-container') || document.querySelector('.contact-page-root');
+        const el = document.querySelector(".contact-page-root__form-container") || document.querySelector(".contact-page-root");
         if (el && el.scrollIntoView) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
         } else {
-          window.scrollTo({ top: 0, behavior: 'smooth' });
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
       }, 300);
 
       // mark submitted and reset form
       setIsSubmitted(true);
-      setFormData({ name: '', email: '', phone: '', service: '', budget: '', message: '', files: [] });
+      setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
       setIsLoading(false);
-
     } catch (error) {
-      console.error('Submit error', error);
-      showToast('Error preparing email. Please try again.', 'error');
+      console.error("Submit error", error);
+      showToast("Error preparing email. Please try again.", "error");
       setIsLoading(false);
     }
   };
