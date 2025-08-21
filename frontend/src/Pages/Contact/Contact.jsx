@@ -27,13 +27,13 @@ import {
 import "./Contact.css";
 
 // Toast Component
-const Toast = ({ message, type, isVisible, onClose }) => {
+const Toast = ({ message, type, isVisible, onClose, duration = 4000 }) => {
   useEffect(() => {
     if (isVisible) {
-      const timer = setTimeout(() => onClose(), 4000);
+      const timer = setTimeout(() => onClose(), duration);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, onClose]);
+  }, [isVisible, onClose, duration]);
 
   if (!isVisible) return null;
 
@@ -101,20 +101,48 @@ const FilePreview = ({ file, onRemove, index }) => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  const isMobileView = window.innerWidth <= 768;
+
   return (
     <div className="file-preview-item">
       <div className="file-preview-content">
         {isImage && preview && (
-          <div className="file-preview-thumbnail">
+          <div className="file-preview-thumbnail" onClick={() => window.open(preview, '_blank')}>
             <img src={preview} alt={file.name} />
+            {isMobileView && (
+              <div className="mobile-preview-actions">
+                <button type="button" className="file-action-btn preview-btn">
+                  <Eye size={16} />
+                </button>
+                <button type="button" className="file-action-btn remove-btn" onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(index);
+                }}>
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
         )}
         {isVideo && preview && (
-          <div className="file-preview-thumbnail video-thumbnail">
+          <div className="file-preview-thumbnail video-thumbnail" onClick={() => window.open(preview, '_blank')}>
             <video src={preview} />
             <div className="video-play-overlay">
               <Play size={20} />
             </div>
+            {isMobileView && (
+              <div className="mobile-preview-actions">
+                <button type="button" className="file-action-btn preview-btn">
+                  <Eye size={16} />
+                </button>
+                <button type="button" className="file-action-btn remove-btn" onClick={(e) => {
+                  e.stopPropagation();
+                  onRemove(index);
+                }}>
+                  <X size={16} />
+                </button>
+              </div>
+            )}
           </div>
         )}
         <div className="file-preview-info">
@@ -125,20 +153,22 @@ const FilePreview = ({ file, onRemove, index }) => {
           </div>
         </div>
       </div>
-      <div className="file-preview-actions">
-        {(isImage || isVideo) && preview && (
-          <button
-            type="button"
-            className="file-action-btn preview-btn"
-            onClick={() => window.open(preview, '_blank')}
-          >
-            <Eye size={16} />
+      {!isMobileView && (
+        <div className="file-preview-actions">
+          {(isImage || isVideo) && preview && (
+            <button
+              type="button"
+              className="file-action-btn preview-btn"
+              onClick={() => window.open(preview, '_blank')}
+            >
+              <Eye size={16} />
+            </button>
+          )}
+          <button type="button" className="file-action-btn remove-btn" onClick={() => onRemove(index)}>
+            <X size={16} />
           </button>
-        )}
-        <button type="button" className="file-action-btn remove-btn" onClick={() => onRemove(index)}>
-          <X size={16} />
-        </button>
-      </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -329,12 +359,12 @@ const Contact = () => {
   }, [formData.service]);
 
   // Toast helper functions
-  const showToast = (message, type = "info") => {
-    setToast({ isVisible: true, message, type });
+  const showToast = (message, type = "info", duration = 4000) => {
+    setToast({ isVisible: true, message, type, duration });
   };
 
   const hideToast = () => {
-    setToast({ isVisible: false, message: "", type: "" });
+    setToast({ isVisible: false, message: "", type: "", duration: 4000 });
   };
 
   // Form validation
@@ -490,119 +520,109 @@ const Contact = () => {
     }
 
     setIsLoading(true);
-
-    // Prepare subject/body
-    const subject = `Project Inquiry: ${formData.service || "General"}`;
-    let bodyText = `Dear Team,\n\nPlease find my project inquiry details below:\n\n`;
-    bodyText += `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nService: ${formData.service}\nBudget: ${formData.budget}\n\n`;
-    bodyText += `Project Description:\n${formData.message}\n\n`;
-    bodyText += `Best regards,\n${formData.name}`;
-
-    // Try native share (mobile) when files exist and browser supports it
-    const tryNativeShare = async () => {
-      if (!formData.files || formData.files.length === 0) return false;
-      if (!navigator || !navigator.canShare || !navigator.share) return false;
-
-      // navigator.canShare expects a { files } object
-      try {
-        const sharePayload = { title: subject, text: bodyText, files: formData.files };
-        if (navigator.canShare && navigator.canShare({ files: formData.files })) {
-          await navigator.share(sharePayload);
-          return true;
-        }
-      } catch (err) {
-        console.warn("Native share failed:", err);
-        return false;
-      }
-      return false;
-    };
+    showToast("Preparing email...", "info");
 
     try {
-      // If files present try native share first (works on many mobile browsers / Gmail app)
-      if (formData.files && formData.files.length > 0) {
-        const didShareNatively = await tryNativeShare();
-        if (didShareNatively) {
-          showToast("Shared to native app (choose Gmail).", "success");
-
-          // scroll form success into view and finalize
-          setTimeout(() => {
-            const el = document.querySelector(".contact-page-root__form-container") || document.querySelector(".contact-page-root");
-            if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
-            else window.scrollTo({ top: 0, behavior: "smooth" });
-          }, 300);
-
-          setIsSubmitted(true);
-          setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
-          setIsLoading(false);
-          return;
-        }
-        // if native share not available/fails, continue to upload-fallback -> Gmail web compose
-        showToast("Native share unavailable — using Gmail web compose fallback.", "warning");
-      }
-
-      // Upload files (if any) to backend to make downloadable links (fallback)
+      // Upload files first if present
       let uploadedFiles = [];
       if (formData.files && formData.files.length > 0) {
+        showToast("Uploading files...", "info");
         const uploadForm = new FormData();
-        formData.files.forEach((f) => uploadForm.append("files", f));
+        formData.files.forEach(f => uploadForm.append("files", f));
 
         const uploadResp = await fetch(`${import.meta.env.VITE_BACKEND_URL || ""}/api/contact/upload`, {
           method: "POST",
-          body: uploadForm,
+          body: uploadForm
         });
 
-        if (uploadResp.ok) {
-          const uploadResult = await uploadResp.json();
-          if (uploadResult.success && Array.isArray(uploadResult.files)) {
-            uploadedFiles = uploadResult.files; // each has url, originalName
-          }
-        } else {
-          showToast("File upload failed. Email will open without attachment links.", "warning");
+        if (!uploadResp.ok) {
+          throw new Error("File upload failed");
+        }
+
+        const uploadResult = await uploadResp.json();
+        if (uploadResult.success && Array.isArray(uploadResult.files)) {
+          uploadedFiles = uploadResult.files;
         }
       }
 
-      // Append uploaded links or filenames to email body
+      // Prepare email content with proper formatting
+      const subject = `Project Inquiry: ${formData.service || "General"}`;
+      let bodyText = `Dear Team,%0D%0A%0D%0APlease find my project inquiry details below:%0D%0A%0D%0A`;
+      bodyText += `Name: ${formData.name}%0D%0A`;
+      bodyText += `Email: ${formData.email}%0D%0A`;
+      bodyText += `Phone: ${formData.phone}%0D%0A`;
+      bodyText += `Service: ${formData.service}%0D%0A`;
+      bodyText += `Budget: ${formData.budget}%0D%0A%0D%0A`;
+      bodyText += `Project Description:%0D%0A${formData.message}%0D%0A%0D%0A`;
+
+      // Add file links to email body
       if (uploadedFiles.length > 0) {
-        bodyText += `\nFiles uploaded (click links to download):\n`;
+        bodyText += `Attached Files:%0D%0A`;
         uploadedFiles.forEach((f, i) => {
-          bodyText += `${i + 1}. ${f.originalName} - ${f.url}\n`;
+          bodyText += `${i + 1}. ${f.originalName}: ${f.url}%0D%0A`;
         });
-      } else if (formData.files && formData.files.length > 0) {
-        bodyText += `\nFiles attached: ${formData.files.map((f) => f.name).join(", ")}\n`;
       }
 
-      // Open Gmail compose (web)
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(
-        "lovelyboyarun91@gmail.com"
-      )}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyText)}`;
+      bodyText += `%0D%0ABest regards,%0D%0A${formData.name}`;
 
-      const win = window.open(gmailUrl, "_blank", "noopener");
-      if (!win) {
-        showToast("Popup blocked. Please allow popups for this site.", "error");
-      } else {
-        try {
-          win.focus();
-        } catch (err) {}
-        showToast("Gmail compose opened. Attachments (if uploaded) are included as links.", "success");
+      // Open Gmail compose in new tab
+      window.open(
+        `https://mail.google.com/mail/?view=cm&fs=1&to=lovelyboyarun91@gmail.com&su=${encodeURIComponent(
+          subject
+        )}&body=${bodyText}`,
+        '_blank'
+      );
+
+      // Prepare WhatsApp message
+      let whatsappText = `Hi, I'm ${formData.name}.%0A%0AProject Details:%0A`;
+      whatsappText += `Service: ${formData.service}%0A`;
+      whatsappText += `Budget: ${formData.budget}%0A%0A`;
+      whatsappText += `Message: ${formData.message}%0A%0A`;
+      
+      if (uploadedFiles.length > 0) {
+        whatsappText += `Files:%0A`;
+        uploadedFiles.forEach((f, i) => {
+          whatsappText += `${i + 1}. ${f.url}%0A`;
+        });
       }
 
-      // ensure contact form / success message is visible at top of page when user returns
-      setTimeout(() => {
-        const el = document.querySelector(".contact-page-root__form-container") || document.querySelector(".contact-page-root");
-        if (el && el.scrollIntoView) {
-          el.scrollIntoView({ behavior: "smooth", block: "start" });
-        } else {
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-      }, 300);
+      // Update WhatsApp link
+      const contactMethods = [
+        {
+          icon: MessageCircle,
+          title: "WhatsApp",
+          description: "Get instant response on WhatsApp",
+          value: "+91 8919825034",
+          action: "Chat Now",
+          color: "from-green-500 to-green-600",
+          href: `https://wa.me/+918919825034?text=${whatsappText}`,
+        },
+        {
+          icon: Mail,
+          title: "Email",
+          description: "Send us a detailed message",
+          value: "lovelyboyarun91@gmail.com",
+          action: "Send Email",
+          color: "from-blue-500 to-blue-600",
+          href: "mailto:lovelyboyarun91@gmail.com",
+        },
+        {
+          icon: Phone,
+          title: "Phone",
+          description: "Speak directly with our team",
+          value: "+91 8919825034",
+          action: "Call Now",
+          color: "from-purple-500 to-purple-600",
+          href: "tel:+918919825034",
+        },
+      ];
 
-      // mark submitted and reset form
       setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
-      setIsLoading(false);
+      showToast("Message sent successfully!", "success");
     } catch (error) {
-      console.error("Submit error", error);
-      showToast("Error preparing email. Please try again.", "error");
+      console.error("Error:", error);
+      showToast("Failed to send message. Please try again.", "error");
+    } finally {
       setIsLoading(false);
     }
   };
@@ -683,7 +703,7 @@ const Contact = () => {
   // detect mobile devices for conditional UI/behavior
   const isMobile = () => /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-  // WhatsApp share handler: native share (with files) preferred, fallback to wa.me with uploaded links
+  // WhatsApp share handler: handles both mobile and web cases
   const handleWhatsAppShare = async (e) => {
     e && e.preventDefault();
     if (!validateForm()) {
@@ -693,69 +713,112 @@ const Contact = () => {
     }
 
     setIsLoading(true);
-    showToast("Preparing WhatsApp message...", "info");
-
-    const subject = `Project Inquiry: ${formData.service || "General"}`;
-    let messageText = `*${subject}*\n\n`;
-    messageText += `Name: ${formData.name}\nEmail: ${formData.email}\nPhone: ${formData.phone}\nService: ${formData.service}\nBudget: ${formData.budget}\n\n`;
-    messageText += `Project Description:\n${formData.message}\n\n`;
+    showToast("Preparing your message...", "info");
 
     try {
-      // 1) Try native share on mobile with files
-      if (formData.files && formData.files.length > 0 && isMobile()) {
-        try {
-          if (navigator.canShare && navigator.canShare({ files: formData.files })) {
-            await navigator.share({ title: subject, text: messageText, files: formData.files });
-            showToast("Shared using device share sheet. Choose WhatsApp to send.", "success");
-            setIsSubmitted(true);
-            setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
-            setIsLoading(false);
-            return;
-          }
-        } catch (err) {
-          console.warn("navigator.share failed:", err);
-        }
-      }
-
-      // 2) Upload files to server (if any) to include public URLs
+      // First, upload any files to get their URLs
       let uploadedFiles = [];
       if (formData.files && formData.files.length > 0) {
         showToast("Uploading files...", "info");
         uploadedFiles = await uploadFilesToServer(formData.files);
       }
 
+      // Prepare the formatted message for both mobile and web
+      const subject = `Project Inquiry: ${formData.service || "General"}`;
+      let messageText = `*${subject}*\n\n`;
+      messageText += `*Contact Details:*\n`;
+      messageText += `Name: ${formData.name}\n`;
+      messageText += `Email: ${formData.email}\n`;
+      messageText += formData.phone ? `Phone: ${formData.phone}\n` : '';
+      messageText += `\n*Project Requirements:*\n`;
+      messageText += `Service: ${formData.service}\n`;
+      messageText += formData.budget ? `Budget: ${formData.budget}\n` : '';
+      messageText += `\n*Project Description:*\n${formData.message}\n`;
+
+      // Add file links in a formatted way
       if (uploadedFiles && uploadedFiles.length > 0) {
-        messageText += `Attached files:\n`;
+        messageText += `\n*Attached Files:*\n`;
         uploadedFiles.forEach((f, i) => {
-          messageText += `${i + 1}. ${f.originalName} - ${f.url}\n`;
+          messageText += `${i + 1}. ${f.originalName}\n${f.url}\n`;
         });
-      } else if (formData.files && formData.files.length > 0) {
-        messageText += `Files selected: ${formData.files.map((f) => f.name).join(", ")}\n`;
       }
 
-      // 3) Open WhatsApp (app on mobile, web on desktop)
+      messageText += "\nThank you for considering our services!";
+
       const whatsappNumber = "918919825034";
       const waUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(messageText)}`;
 
-      if (isMobile()) {
-        window.location.href = waUrl;
-      } else {
-        const win = window.open(waUrl, "_blank", "noopener");
-        if (!win) {
-          showToast("Popup blocked. Please allow popups for this site.", "error");
-          setIsLoading(false);
-          return;
-        }
-        try { win.focus(); } catch {}
-      }
+      const handleSuccess = () => {
+        setIsSubmitted(true);
+        setFormData({ 
+          name: "", 
+          email: "", 
+          phone: "", 
+          service: "", 
+          budget: "", 
+          message: "", 
+          files: [] 
+        });
+        showToast("Message prepared successfully!", "success");
+        setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 300);
+      };
 
-      showToast("WhatsApp opened. Review message and send.", "success");
-      setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", service: "", budget: "", message: "", files: [] });
-      setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 300);
+      if (isMobile()) {
+        // For mobile: Direct WhatsApp URL with uploaded file links
+        try {
+          // Create a hidden anchor element for better mobile handling
+          const link = document.createElement('a');
+          link.href = waUrl;
+          link.target = '_blank';
+          link.rel = 'noopener noreferrer';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          handleSuccess();
+        } catch (error) {
+          console.warn("Direct link failed, trying window.location", error);
+          window.location.href = waUrl;
+          handleSuccess();
+        }
+      } else {
+        // For desktop: Handle popup blocker
+        try {
+          // First attempt: try to open directly
+          const win = window.open(waUrl, '_blank');
+          
+          if (!win || win.closed || typeof win.closed === 'undefined') {
+            // If blocked, show instructions and create a button
+            showToast("Please click 'Open WhatsApp' button that will appear", "info", 8000);
+            
+            // Create a temporary button for user interaction
+            const btn = document.createElement('button');
+            btn.innerHTML = 'Open WhatsApp';
+            btn.style.display = 'none';
+            document.body.appendChild(btn);
+            
+            // Click handler that will work after user interaction
+            btn.onclick = () => {
+              window.open(waUrl, '_blank');
+              document.body.removeChild(btn);
+              handleSuccess();
+            };
+            
+            // Trigger click
+            btn.click();
+          } else {
+            win.focus();
+            handleSuccess();
+          }
+        } catch (error) {
+          console.error("WhatsApp open error:", error);
+          // Final fallback: direct location change
+          window.location.href = waUrl;
+          handleSuccess();
+        }
+      }
     } catch (err) {
       console.error("handleWhatsAppShare error", err);
-      showToast("Error preparing WhatsApp message. Try again.", "error");
+      showToast("Error preparing message. Please try again.", "error");
     } finally {
       setIsLoading(false);
     }
@@ -802,10 +865,30 @@ const Contact = () => {
                 </div>
                 <h3>Thank You!</h3>
                 <p>
-                  Your project request has been sent successfully. Our team will
-                  review your requirements and get back to you within 24 hours
-                  with a detailed proposal.
+                  {isMobile() 
+                    ? "Your message has been prepared and WhatsApp will open shortly. Please review and send your message to complete the process."
+                    : "Your project details have been prepared. A new window will open with WhatsApp Web where you can review and send your message."}
                 </p>
+                <div className="contact-page-root__success-actions">
+                  <button
+                    onClick={() => {
+                      setIsSubmitted(false);
+                      setFormData({
+                        name: "",
+                        email: "",
+                        phone: "",
+                        service: "",
+                        budget: "",
+                        message: "",
+                        files: [],
+                      });
+                    }}
+                    className="contact-page-root__new-message-btn"
+                  >
+                    <MessageCircle size={16} />
+                    Send Another Message
+                  </button>
+                </div>
               </div>
             ) : (
               <form
@@ -1004,39 +1087,31 @@ const Contact = () => {
                   )}
                 </div>
 
-                <div className="contact-page-root__submit-group" style={{ marginTop: 12 }}>
-                  {/* Gmail button hidden on mobile by conditional render */}
+                <div className="contact-page-root__submit-group">
                   {!isMobile() && (
                     <button
                       type="submit"
+                      className="contact-page-root__submit-btn"
                       disabled={isLoading}
-                      className={`contact-page-root__submit-btn ${isLoading ? "loading" : ""}`}
-                      aria-label="Send via Gmail"
                     >
                       {isLoading ? (
-                        <>
-                          <div className="contact-page-root__loading-spinner"></div>
-                          <span>Opening Gmail...</span>
-                        </>
+                        <div className="contact-page-root__loading-spinner" />
                       ) : (
                         <>
-                          <Mail />
-                          <span>Send via Gmail</span>
+                          <Send size={20} />
+                          Send Message
                         </>
                       )}
                     </button>
                   )}
-
                   <button
                     type="button"
                     onClick={handleWhatsAppShare}
-                    disabled={isLoading}
                     className="contact-page-root__whatsapp-btn"
-                    aria-label="Send via WhatsApp"
-                    style={{ flex: isMobile() ? '1 1 100%' : undefined }}
+                    disabled={isLoading}
                   >
-                    <MessageCircle />
-                    <span>Send via WhatsApp</span>
+                    <MessageCircle size={20} />
+                    {isMobile() ? 'Send Message via WhatsApp' : 'WhatsApp'}
                   </button>
                 </div>
 

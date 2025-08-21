@@ -481,6 +481,7 @@
 .file-preview-grid {
   display: grid;
   gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .file-preview-item {
@@ -492,6 +493,50 @@
   border-radius: 16px;
   padding: 16px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile view adjustments */
+@media (max-width: 768px) {
+  .mobile-preview-actions {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    right: 8px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    padding: 8px;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .file-preview-thumbnail:hover .mobile-preview-actions,
+  .file-preview-thumbnail:active .mobile-preview-actions {
+    opacity: 1;
+  }
+
+  .mobile-preview-actions .file-action-btn {
+    padding: 8px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.9);
+  }
+
+  .file-preview-item {
+    flex-direction: column;
+  }
+
+  .file-preview-thumbnail {
+    width: 100%;
+    height: 200px;
+    margin-bottom: 12px;
+  }
+
+  .file-preview-content {
+    width: 100%;
+  }
 }
 
 .file-preview-item:hover {
@@ -711,12 +756,30 @@ box-shadow: 0 8px 32px rgba(37, 238, 101, 0.3);
   cursor: not-allowed;
 }
 
-/* Button group wrapper adjustments for small screens */
+/* Button group wrapper adjustments for all screens */
 .contact-page-root__submit-group {
   display: flex;
   gap: 12px;
   align-items: center;
   flex-wrap: wrap;
+}
+
+/* Mobile layout: full-width WhatsApp button only */
+@media (max-width: 768px) {
+  .contact-page-root__submit-group {
+    flex-direction: column;
+  }
+
+  .contact-page-root__whatsapp-btn {
+    width: 100%;
+    padding: 16px 24px;
+    font-size: 18px;
+    margin-top: 0;
+  }
+
+  .contact-page-root__submit-btn {
+    display: none; /* Hide email button on mobile */
+  }
 }
 
 /* Desktop layout: two equal buttons (left / right) with same height and width */
@@ -731,8 +794,8 @@ box-shadow: 0 8px 32px rgba(37, 238, 101, 0.3);
   /* Make both buttons take equal space and match height */
   .contact-page-root__submit-group > button {
     flex: 1 1 0;
-    min-height: 36px; /* consistent height */
-    padding: 14px 20px; /* normalized padding */
+    min-height: 36px;
+    padding: 14px 20px;
     border-radius: 14px;
     display: inline-flex;
     align-items: center;
@@ -741,7 +804,6 @@ box-shadow: 0 8px 32px rgba(37, 238, 101, 0.3);
     box-sizing: border-box;
   }
 
-  /* Ensure the primary submit keeps its style but respects sizing */
   .contact-page-root__submit-btn {
     padding: 14px 20px;
     font-size: 18px;
@@ -952,9 +1014,56 @@ box-shadow: 0 8px 32px rgba(37, 238, 101, 0.3);
 
 .contact-page-root__success-message p {
   color: #6b7280;
-  margin: 0;
+  margin: 0 0 24px 0;
   line-height: 1.7;
   font-size: 16px;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.contact-page-root__success-actions {
+  margin-top: 32px;
+}
+
+.contact-page-root__new-message-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+}
+
+.contact-page-root__new-message-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.3);
+}
+
+@media (max-width: 768px) {
+  .contact-page-root__success-message {
+    padding: 32px 20px;
+  }
+  
+  .contact-page-root__success-message h3 {
+    font-size: 24px;
+  }
+  
+  .contact-page-root__success-message p {
+    font-size: 15px;
+  }
+  
+  .contact-page-root__new-message-btn {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ===== GET IN TOUCH SECTION ===== */
