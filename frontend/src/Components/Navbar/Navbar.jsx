@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   Package,
+  Banknote,
 } from "lucide-react";
 
 const Navbar = ({ setShowLogin }) => {
@@ -149,6 +150,22 @@ const Navbar = ({ setShowLogin }) => {
               <span>WhatsApp</span>
             </a>
 
+            {/* Donate Button */}
+            <Link
+              to="/about#donations"
+              className="donate-nav-btn"
+              onClick={(e) => {
+                const donationSection = document.querySelector('.donation-section');
+                if (location.pathname === '/about' && donationSection) {
+                  e.preventDefault();
+                  donationSection.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+            >
+              <Banknote className="donate-icon" />
+              <span>Donate</span>
+            </Link>
+
             {/* Auth Section */}
             {!token ? (
               <button
@@ -242,6 +259,22 @@ const Navbar = ({ setShowLogin }) => {
                 <MessageCircle className="mobile-whatsapp-icon" />
                 <span>WhatsApp</span>
               </a>
+
+              <Link
+                to="/about#donations"
+                className="mobile-donate-btn"
+                onClick={(e) => {
+                  setIsOpen(false);
+                  const donationSection = document.querySelector('.donation-section');
+                  if (location.pathname === '/about' && donationSection) {
+                    e.preventDefault();
+                    donationSection.scrollIntoView({ behavior: 'smooth' });
+                  }
+                }}
+              >
+                <Banknote className="mobile-donate-icon" />
+                <span>Donate</span>
+              </Link>
 
               {!token ? (
                 <button

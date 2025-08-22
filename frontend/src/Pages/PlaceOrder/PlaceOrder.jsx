@@ -386,7 +386,7 @@ const validateAddressSelection = () => {
             `Order Details:\n${items.map(item => `- ${item.name} (${item.size}) × ${item.quantity}`).join('\n')}\n\n` +
             `Delivery Address:\n${orderData.address.street}, ${orderData.address.city}, ${orderData.address.state} - ${orderData.address.zipcode}`;
           
-          const whatsappUrl = `https://wa.me/917899940804?text=${encodeURIComponent(whatsappMessage)}`;
+          const whatsappUrl = `https://wa.me/918919825034?text=${encodeURIComponent(whatsappMessage)}`;
           await clearCart();
           localStorage.removeItem('appliedPromo');
           window.open(whatsappUrl, '_blank');

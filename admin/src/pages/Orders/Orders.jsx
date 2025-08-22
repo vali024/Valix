@@ -228,7 +228,7 @@ Items: ${orderDetails}
 Shipping Address: ${order.address.street}, ${order.address.city}, ${order.address.state} - ${order.address.pincode}
 Payment Method: ${order.payment.method}`;
 
-    const whatsappUrl = `https://wa.me/917899940804?text=${encodeURIComponent(
+    const whatsappUrl = `https://wa.me/918919825034?text=${encodeURIComponent(
       message
     )}`;
     window.open(whatsappUrl, "_blank");

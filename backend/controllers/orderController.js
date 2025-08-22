@@ -48,7 +48,7 @@ const placeOrder = async (req, res) => {
 
         const sendWhatsAppNotification = async (order) => {
             const user = await userModel.findById(order.userId);
-            const whatsappNumber = "917899940804";
+            const whatsappNumber = "918919825034";
             const orderDetails = order.items.map(item => 
                 `${item.name} (${item.size}) × ${item.quantity}`
             ).join(", ");
@@ -96,7 +96,7 @@ Payment Method: ${order.payment.method}`;
                     `Reference: Order #${newOrder._id.toString().slice(-6)}`;
 
                 // Create WhatsApp URL with the formatted message
-                const whatsappUrl = `https://wa.me/917899940804?text=${encodeURIComponent(paymentMessage)}`;
+                const whatsappUrl = `https://wa.me/918919825034?text=${encodeURIComponent(paymentMessage)}`;
                 
                 // Update order status
                 await orderModel.findByIdAndUpdate(newOrder._id, {

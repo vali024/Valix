@@ -74,6 +74,7 @@ const Footer = () => {
                 { name: "Services", path: "/services" },
                 { name: "Portfolio", path: "/portfolio" },
                 { name: "Products", path: "/shop" },
+                { name: "About", path: "/about" },
                 { name: "Contact", path: "/contact" },
               ].map((item) => (
                 <li key={item.name} className="footer-nav-item">
@@ -94,6 +95,7 @@ const Footer = () => {
                 { name: "Graphic Design", path: "/services#graphic-design" },
                 { name: "Video Editing", path: "/services#video-editing" },
                 { name: "Social Media", path: "/services#social-media" },
+                { name: "Certifications", path: "/certifications" },
               ].map((service) => (
                 <li key={service.name} className="footer-nav-item">
                   <Link to={service.path} className="footer-nav-link">

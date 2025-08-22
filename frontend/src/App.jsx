@@ -4,10 +4,12 @@ import { Routes, Route } from "react-router-dom";
 import Cart from "./Pages/Cart/Cart";
 import Home from "./Pages/Home/Home";
 import Shop from "./Pages/Shop/Shop";
+import About from "./Pages/About/About"
 import Services from "./Pages/Services/Services";
 import Portfolio from "./Pages/Portfolio/Portfolio";
 import Contact from "./Pages/Contact/Contact";
 import PlaceOrder from "./Pages/PlaceOrder/PlaceOrder";
+import Certifications from "./Pages/Certifications/Certifications";
 import Footer from "./Components/Footer/Footer";
 import LoginPopup from "./Components/LoginPopup/LoginPopup";
 import Verify from "./Pages/Verify/Verify";
@@ -36,6 +38,8 @@ const App = () => {
           <Route path="/order" element={<PlaceOrder />} />
           <Route path="/verify" element={<Verify />} />
           <Route path="/myorders" element={<MyOrders />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/certifications" element={<Certifications />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
         </Routes>

@@ -1,55 +1,87 @@
-import React from 'react'
-import { StoreContext } from '../../Context/StoreContext'
-import { toast } from 'react-toastify'
-import { useNavigate } from 'react-router-dom'
-import './CartComponent.css'
+import React from "react";
+import { StoreContext } from "../../Context/StoreContext";
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import "./CartComponent.css";
 
 const CartComponent = () => {
-  const { cartItems, food_list, removeFromCart, getTotalCartAmount, getTotalCartSavings, addToCart, url, loading } = React.useContext(StoreContext);
-  const [promoCode, setPromoCode] = React.useState('');
+  const {
+    cartItems,
+    food_list,
+    removeFromCart,
+    getTotalCartAmount,
+    getTotalCartSavings,
+    addToCart,
+    url,
+    loading,
+  } = React.useContext(StoreContext);
+  const [promoCode, setPromoCode] = React.useState("");
   const [appliedPromo, setAppliedPromo] = React.useState(null);
   const [copiedCode, setCopiedCode] = React.useState(null);
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    const savedPromo = localStorage.getItem('appliedPromo');
-    if (savedPromo === 'ABOVE500' && getTotalCartAmount() >= 500) {
-      setAppliedPromo({ type: 'percentage', value: 5, code: savedPromo });
+    const savedPromo = localStorage.getItem("appliedPromo");
+    const cartTotal = getTotalCartAmount();
+
+    if (savedPromo === "ABOVE1000" && cartTotal >= 1000) {
+      setAppliedPromo({ type: "percentage", value: 10, code: savedPromo });
+    } else if (savedPromo === "ABOVE500" && cartTotal >= 500) {
+      setAppliedPromo({ type: "percentage", value: 5, code: savedPromo });
+    } else if (savedPromo) {
+      // Remove promo if cart total is less than required amount
+      localStorage.removeItem("appliedPromo");
+      setAppliedPromo(null);
+      toast.warning(
+        "Promo code removed as cart total is less than required amount"
+      );
     }
   }, [getTotalCartAmount]);
 
   const getQuantityLabel = (size) => {
     switch (size) {
-      case 'g250': return '250 gm';
-      case 'g500': return '500 gm';
-      case 'kg1': return '1 kg';
-      default: return size;
+      case "g250":
+        return "250 gm";
+      case "g500":
+        return "500 gm";
+      case "kg1":
+        return "1 kg";
+      default:
+        return size;
     }
   };
 
   const handlePromoCode = () => {
     const code = promoCode.trim().toUpperCase();
     const subtotal = getTotalCartAmount();
-    
+
     if (!code) {
-      toast.error('Please enter a promocode');
+      toast.error("Please enter a promocode");
       return;
     }
-    
-    if (code === 'ABOVE500' && subtotal >= 500) {
-      setAppliedPromo({ type: 'percentage', value: 5, code });
-      localStorage.setItem('appliedPromo', code);
-      toast.success('5% discount applied successfully!');
-    } else if (code === 'ABOVE500') {
-      toast.error('This code is valid only for orders above ₹500');
+
+    if (code === "ABOVE1000" && subtotal >= 1000) {
+      setAppliedPromo({ type: "percentage", value: 10, code });
+      localStorage.setItem("appliedPromo", code);
+      toast.success("10% discount applied successfully!");
+    } else if (code === "ABOVE1000") {
+      toast.error("This code is valid only for orders above ₹1000");
       setAppliedPromo(null);
-      localStorage.removeItem('appliedPromo');
+      localStorage.removeItem("appliedPromo");
+    } else if (code === "ABOVE500" && subtotal >= 500) {
+      setAppliedPromo({ type: "percentage", value: 5, code });
+      localStorage.setItem("appliedPromo", code);
+      toast.success("5% discount applied successfully!");
+    } else if (code === "ABOVE500") {
+      toast.error("This code is valid only for orders above ₹500");
+      setAppliedPromo(null);
+      localStorage.removeItem("appliedPromo");
     } else {
-      toast.error('Invalid promocode');
+      toast.error("Invalid promocode");
       setAppliedPromo(null);
-      localStorage.removeItem('appliedPromo');
+      localStorage.removeItem("appliedPromo");
     }
-    setPromoCode('');
+    setPromoCode("");
   };
 
   const copyPromoCode = (code) => {
@@ -63,33 +95,32 @@ const CartComponent = () => {
   const getDiscountAmount = () => {
     if (!appliedPromo) return 0;
     const subtotal = getTotalCartAmount();
-    if (appliedPromo.type === 'percentage') {
+    if (appliedPromo.type === "percentage") {
       return (subtotal * appliedPromo.value) / 100;
     }
     return 0;
   };
 
   const getDeliveryFee = () => {
-    if (appliedPromo?.type === 'free_delivery') return 0;
+    if (appliedPromo?.type === "free_delivery") return 0;
     return getTotalCartAmount() === 0 ? 0 : 18;
   };
 
   const handleCheckout = () => {
     if (Object.keys(cartItems).length > 0) {
-      navigate('/order');
+      navigate("/order");
     } else {
-      toast.error('Your cart is empty');
+      toast.error("Your cart is empty");
     }
   };
 
   const handleContinueShopping = () => {
-    navigate('/shop');
+    navigate("/shop");
   };
-
   const calculateTaxes = () => {
     const subtotal = getTotalCartAmount();
-    const sgst = (subtotal * 0.05); // 5% SGST
-    const cgst = (subtotal * 0.05); // 5% CGST
+    const sgst = subtotal * 0.025; // 2.5% SGST
+    const cgst = subtotal * 0.025; // 2.5% CGST
     return { sgst, cgst };
   };
 
@@ -103,7 +134,7 @@ const CartComponent = () => {
 
   if (loading) return null;
 
-  const hasItems = Object.values(cartItems).some(item => item.quantity > 0);
+  const hasItems = Object.values(cartItems).some((item) => item.quantity > 0);
 
   return (
     <div className="cart">
@@ -123,17 +154,26 @@ const CartComponent = () => {
             <br />
             <hr />
             {Object.entries(cartItems).map(([cartKey, cartItem]) => {
-              const [itemId, size] = cartKey.split('_');
-              const item = food_list.find(food => food._id === itemId);
-              
-              if (item && cartItem.quantity > 0 && !item.outOfStock && item.status === 'in-stock') {
+              const [itemId, size] = cartKey.split("_");
+              const item = food_list.find((food) => food._id === itemId);
+
+              if (
+                item &&
+                cartItem.quantity > 0 &&
+                !item.outOfStock &&
+                item.status === "in-stock"
+              ) {
                 const price = item.prices?.[size] || item.price;
-                const marketPrice = item.marketPrices?.[size] || item.marketPrice || price;
-                
+                const marketPrice =
+                  item.marketPrices?.[size] || item.marketPrice || price;
+
                 return (
                   <div key={cartKey}>
                     <div className="cart-items-title cart-items-item">
-                      <img src={`${url}/images/${item.image}`} alt={item.name} />
+                      <img
+                        src={`${url}/images/${item.image}`}
+                        alt={item.name}
+                      />
                       <p>{item.name}</p>
                       <p>{getQuantityLabel(size)}</p>
                       <p className="market-price">₹{marketPrice}</p>
@@ -148,11 +188,16 @@ const CartComponent = () => {
                         </button>
                       </div>
                       <p>₹{price * cartItem.quantity}</p>
-                      <p onClick={() => {
-                        for (let i = 0; i < cartItem.quantity; i++) {
-                          removeFromCart(itemId, size);
-                        }
-                      }} className="cross">×</p>
+                      <p
+                        onClick={() => {
+                          for (let i = 0; i < cartItem.quantity; i++) {
+                            removeFromCart(itemId, size);
+                          }
+                        }}
+                        className="cross"
+                      >
+                        ×
+                      </p>
                     </div>
                     <hr />
                   </div>
@@ -169,14 +214,14 @@ const CartComponent = () => {
                   <p>Subtotal</p>
                   <p>₹{getTotalCartAmount()}</p>
                 </div>
-                <hr />
+                <hr />{" "}
                 <div className="cart-total-details">
-                  <p>SGST (5%)</p>
+                  <p>SGST (2.5%)</p>
                   <p>₹{calculateTaxes().sgst.toFixed(2)}</p>
                 </div>
                 <hr />
                 <div className="cart-total-details">
-                  <p>CGST (5%)</p>
+                  <p>CGST (2.5%)</p>
                   <p>₹{calculateTaxes().cgst.toFixed(2)}</p>
                 </div>
                 <hr />
@@ -206,18 +251,34 @@ const CartComponent = () => {
               </div>
               <button onClick={handleCheckout}>Proceed to Checkout</button>
             </div>
-            <div className='cart-promocode'>
+            <div className="cart-promocode">
               <div>
                 <h3>Available Offers</h3>
                 <div className="promo-offers">
                   <div className="promo-offer-item">
                     <div className="promo-code-container">
-                      <span className="code">ABOVE500</span>
-                      <button 
+                      <span className="code">ABOVE1000</span>
+                      <button
                         className="copy-button"
-                        onClick={() => copyPromoCode('ABOVE500')}
+                        onClick={() => copyPromoCode("ABOVE1000")}
                       >
-                        {copiedCode === 'ABOVE500' ? (
+                        {copiedCode === "ABOVE1000" ? (
+                          <i className="fas fa-check"></i>
+                        ) : (
+                          <i className="far fa-copy"></i>
+                        )}
+                      </button>
+                    </div>
+                    <p>Get 10% off on orders above ₹1000!</p>
+                  </div>
+                  <div className="promo-offer-item">
+                    <div className="promo-code-container">
+                      <span className="code">ABOVE500</span>
+                      <button
+                        className="copy-button"
+                        onClick={() => copyPromoCode("ABOVE500")}
+                      >
+                        {copiedCode === "ABOVE500" ? (
                           <i className="fas fa-check"></i>
                         ) : (
                           <i className="far fa-copy"></i>
@@ -229,13 +290,13 @@ const CartComponent = () => {
                 </div>
                 <p className="promocode-title">Enter Promocode</p>
                 <div className="cart-promocode-input">
-                  <input 
-                    type="text" 
-                    placeholder='Enter promocode' 
+                  <input
+                    type="text"
+                    placeholder="Enter promocode"
                     value={promoCode}
                     onChange={(e) => setPromoCode(e.target.value)}
                     onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         handlePromoCode();
                       }
                     }}
@@ -244,8 +305,8 @@ const CartComponent = () => {
                 </div>
                 {appliedPromo && (
                   <p className="applied-promo">
-                    {appliedPromo.type === 'free_delivery' 
-                      ? '🎉 Free delivery applied!' 
+                    {appliedPromo.type === "free_delivery"
+                      ? "🎉 Free delivery applied!"
                       : `🎉 ${appliedPromo.value}% discount applied!`}
                   </p>
                 )}
@@ -255,7 +316,7 @@ const CartComponent = () => {
         </>
       ) : (
         <div className="empty-cart">
-          <i className="fas fa-shopping-cart"></i>
+          <i className="fas fa-shopping"></i>
           <h2>Your Cart is Empty</h2>
           <p>Add items to your cart to proceed with checkout</p>
           <button onClick={handleContinueShopping}>Continue Shopping</button>

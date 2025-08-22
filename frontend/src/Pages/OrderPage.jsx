@@ -99,7 +99,7 @@ const OrderPage = () => {
                 setOrderId(newOrderId);
 
                 if (paymentMethod === 'WhatsApp') {
-                    const whatsappNumber = "917899940804";
+                    const whatsappNumber = "918919825034";
                     const whatsappMessage = formatWhatsAppMessage(orderData, newOrderId);
                     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${whatsappMessage}`;
                     
