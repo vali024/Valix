@@ -23,7 +23,7 @@ const Footer = () => {
               <div className="brand-icon-container">
                 <Zap className="brand-icon" />
               </div>
-              <span className="brand-name">Valix Digital</span>
+              <span className="brand-name">Valix Digital Services</span>
             </div>
             <p className="brand-description">
               Your one-stop agency for everything digital — fast, affordable &

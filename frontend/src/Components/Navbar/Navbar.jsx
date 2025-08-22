@@ -147,7 +147,7 @@ const Navbar = ({ setShowLogin }) => {
               className="whatsapp-btn"
             >
               <MessageCircle className="whatsapp-icon" />
-              <span>WhatsApp</span>
+              <span>WA</span>
             </a>
 
             {/* Donate Button */}
@@ -172,7 +172,7 @@ const Navbar = ({ setShowLogin }) => {
                 onClick={() => setShowLogin(true)}
                 className="get-quote-btn"
               >
-                Login
+                Sign In
               </button>
             ) : (
               <div className="navbar-profile" onClick={toggleProfile}>
@@ -284,7 +284,7 @@ const Navbar = ({ setShowLogin }) => {
                   }}
                   className="mobile-get-quote-btn"
                 >
-                  Login
+                  Sign In
                 </button>
               ) : (
                 <div className="mobile-auth-section">

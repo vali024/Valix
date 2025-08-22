@@ -217,7 +217,7 @@ const PlaceOrder = () => {
     } catch (error) {
       console.error("Error saving address:", error);
       if (error.response?.status === 401) {
-        toast.error("Please log in again to save address");
+        toast.error("Please sign in again to save address");
       } else {
         toast.error(error.response?.data?.message || "Failed to save address");
       }

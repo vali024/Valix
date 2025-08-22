@@ -1,20 +1,23 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import {
-  ExternalLink,
-  Play,
-  Eye,
-  Filter,
-  Zap,
-  Target,
-  Layers,
-  Clock,
-  MessageCircle,
-  CheckCircle,
+import { 
+  ExternalLink, 
+  Play, 
+  Eye, 
+  Filter, 
+  Zap, 
+  Target, 
+  Layers, 
+  Clock, 
+  MessageCircle, 
+  CheckCircle, 
   X,
   Github,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import "./Portfolio.css";
 import "./double-click-styles.css";
+import { assets } from '../../assets/assets';
 import tecnho from "../../assets/DigitalM.png";
 import cont from "../../assets/Content.png";
 
@@ -27,16 +30,15 @@ export const examplePortfolio = [
     description: "A modern, responsive landing page for a high-end restaurant featuring smooth animations and online booking.",
     category: "Web",
     technologies: ["React", "Tailwind CSS", "Framer Motion"],
-    image: tecnho,
-    video: "/portfolio/Restostatic-siteV.mp4",
-    websiteUrl: "https://restaurant-demo.com",
-    githubUrl: "https://github.com/example/restaurant-landing",
+    image: assets.resto3,
+    images: [assets.resto3, assets.resto2, assets.resto1, assets.resto4, assets.resto5 ,assets.resto6, assets.resto7, assets.resto8 ], // Add multiple images for slideshow
+    websiteUrl: "https://restosite.onrender.com/",
+    githubUrl: "https://github.com/vali024/Restosite",
     featured: true,
-    completionDate: "2023",
+    completionDate: "2024",
     client: "Fine Dining Co.",
     details: [
       "Interactive menu showcase",
-      "Table reservation system",
       "Custom animations",
       "Mobile-first design",
       "Performance optimization"
@@ -147,12 +149,44 @@ const Portfolio = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState({});
   const filterSectionRef = useRef(null);
+  const slideTimerRef = useRef(null);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      if (slideTimerRef.current) {
+        clearInterval(slideTimerRef.current);
+      }
+    };
   }, []);
+
+  // Function to handle automatic image transitions
+  const startImageTransition = (itemId) => {
+    if (slideTimerRef.current) {
+      clearInterval(slideTimerRef.current);
+    }
+
+    slideTimerRef.current = setInterval(() => {
+      setCurrentImageIndex((prev) => {
+        const currentIndex = prev[itemId] || 0;
+        const itemImages = examplePortfolio.find(item => item.id === itemId)?.images || [examplePortfolio.find(item => item.id === itemId)?.image];
+        return {
+          ...prev,
+          [itemId]: (currentIndex + 1) % itemImages.length
+        };
+      });
+    }, 2000); // Change image every 2 seconds
+  };
+
+  // Stop transitions when mouse is over the image
+  const stopImageTransition = () => {
+    if (slideTimerRef.current) {
+      clearInterval(slideTimerRef.current);
+    }
+  };
 
   // Filter portfolio items based on active filter
   const filteredPortfolioItems = useMemo(() => {
@@ -200,6 +234,17 @@ const Portfolio = () => {
   const MediaModal = ({ item, onClose }) => {
     if (!item) return null;
 
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const images = item.images || [item.image];
+
+    const nextImage = () => {
+      setActiveImageIndex((prev) => (prev + 1) % images.length);
+    };
+
+    const prevImage = () => {
+      setActiveImageIndex((prev) => (prev - 1 + images.length) % images.length);
+    };
+
     return (
       <div className="media-modal-overlay" onClick={onClose}>
         <div className="media-modal" onClick={(e) => e.stopPropagation()}>
@@ -209,72 +254,100 @@ const Portfolio = () => {
 
           <div className="media-container">
             <img
-              src={item.image || "https://via.placeholder.com/800x600?text=Project+Image"}
-              alt={item.title}
+              src={images[activeImageIndex] || "https://via.placeholder.com/800x600?text=Project+Image"}
+              alt={`${item.title} - Image ${activeImageIndex + 1}`}
               className="modal-image"
               onError={(e) => {
                 console.error("Image error:", e);
                 e.target.src = "https://via.placeholder.com/800x600?text=Image+Not+Found";
               }}
             />
+            {images.length > 1 && (
+              <>
+                <button className="modal-nav prev" onClick={prevImage}>
+                  <ChevronLeft size={24} />
+                </button>
+                <button className="modal-nav next" onClick={nextImage}>
+                  <ChevronRight size={24} />
+                </button>
+                <div className="modal-image-indicators">
+                  {images.map((_, index) => (
+                    <button
+                      key={index}
+                      className={`indicator ${index === activeImageIndex ? "active" : ""}`}
+                      onClick={() => setActiveImageIndex(index)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
           <div className="modal-info">
-            <h3>{item.title}</h3>
+            <div className="modal-header">
+              <h3>{item.title}</h3>
+              <div className="modal-actions">
+                {item.websiteUrl && (
+                  <button
+                    onClick={() => openWebsite(item.websiteUrl)}
+                    className="website-link-btn"
+                  >
+                    <ExternalLink size={16} />
+                    <span>View Live Demo</span>
+                  </button>
+                )}
+                {item.githubUrl && (
+                  <button
+                    onClick={() => openWebsite(item.githubUrl)}
+                    className="github-link-btn"
+                  >
+                    <Github size={16} />
+                    <span>View Code</span>
+                  </button>
+                )}
+              </div>
+            </div>
+
             <p className="modal-description">{item.description}</p>
 
-            <div className="modal-actions">
-              {item.websiteUrl && (
-                <button
-                  onClick={() => openWebsite(item.websiteUrl)}
-                  className="website-link-btn"
-                >
-                  <ExternalLink size={16} />
-                  View Live Demo
-                </button>
-              )}
-              {item.githubUrl && (
-                <button
-                  onClick={() => openWebsite(item.githubUrl)}
-                  className="github-link-btn"
-                >
-                  <Github size={16} />
-                  View Code
-                </button>
-              )}
-            </div>
-
-            <div className="modal-details">
-              <div className="detail-item">
-                <h4>Client</h4>
-                <p>{item.client}</p>
-              </div>
-              <div className="detail-item">
-                <h4>Completed</h4>
-                <p>{item.completionDate}</p>
-              </div>
-              <div className="detail-item">
-                <h4>Technologies</h4>
-                <div className="modal-tags">
-                  {item.technologies.map((tech) => (
-                    <span key={tech} className="modal-tag">
-                      {tech}
-                    </span>
-                  ))}
+            <div className="modal-grid">
+              <div className="modal-details">
+                <div className="detail-item">
+                  <h4>Client</h4>
+                  <p>{item.client}</p>
+                </div>
+                <div className="detail-item">
+                  <h4>Completed</h4>
+                  <p>{item.completionDate}</p>
+                </div>
+                <div className="detail-item">
+                  <h4>Technologies</h4>
+                  <div className="modal-tags">
+                    {item.technologies.map((tech) => (
+                      <span key={tech} className="modal-tag">
+                        {tech}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="modal-features">
-              <h4>Key Features</h4>
-              <ul className="features-list">
-                {item.details.map((detail, index) => (
-                  <li key={index}>
-                    <CheckCircle size={16} className="feature-icon" />
-                    {detail}
-                  </li>
-                ))}
-              </ul>
+              <div className="modal-features">
+                <h4>
+                  <Zap className="feature-header-icon" />
+                  Key Features
+                </h4>
+                <ul className="features-list">
+                  {item.details.map((detail, index) => (
+                    <li key={index}>
+                      <div className="feature-icon-wrapper">
+                        <CheckCircle size={16} className="feature-icon" />
+                      </div>
+                      <span>{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -422,9 +495,15 @@ const Portfolio = () => {
                   className="portfolio-card"
                   onDoubleClick={() => openMediaModal(item)}
                 >
-                  <div className="portfolio-card-image">
+                  <div 
+                    className="portfolio-card-image"
+                    onMouseEnter={() => startImageTransition(item.id)}
+                    onMouseLeave={stopImageTransition}
+                  >
                     <img
-                      src={item.image || "https://via.placeholder.com/400x300?text=Project+Image"}
+                      src={
+                        (item.images?.[currentImageIndex[item.id]] || item.image || "https://via.placeholder.com/400x300?text=Project+Image")
+                      }
                       alt={item.title}
                       className="card-image"
                       onError={(e) => {
@@ -432,6 +511,18 @@ const Portfolio = () => {
                         e.target.src = "https://via.placeholder.com/400x300?text=Image+Not+Found";
                       }}
                     />
+                    {item.images && item.images.length > 1 && (
+                      <div className="image-indicators">
+                        {item.images.map((_, index) => (
+                          <span
+                            key={index}
+                            className={`indicator ${
+                              index === (currentImageIndex[item.id] || 0) ? "active" : ""
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    )}
                     <div className="card-overlay">
                       <div className="overlay-content">
                         <div className="overlay-tags">
