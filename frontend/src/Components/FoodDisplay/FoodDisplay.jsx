@@ -4,12 +4,18 @@ import "./FoodDisplay.css";
 import { StoreContext } from "../../Context/StoreContext";
 import FoodItem from "../FoodItem/FoodItem";
 import { useNavigate, Link } from "react-router-dom";
-import { Zap } from "lucide-react";
+import { Zap, Eye } from "lucide-react";
+import ImageViewer from "../ImageViewer/ImageViewer";
 
 const FoodDisplay = ({ category }) => {
   const { food_list } = useContext(StoreContext);
   const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("All Products");
+  const [viewerImage, setViewerImage] = useState(null);
+  
+  const handleImageView = (imageUrl) => {
+    setViewerImage(`${import.meta.env.VITE_BACKEND_URL}/images/${imageUrl}`);
+  };
 
   const tabs = [
     "All Products",
@@ -82,6 +88,11 @@ const FoodDisplay = ({ category }) => {
 
   return (
     <div className="food-display" id="food-display">
+      <ImageViewer
+        isOpen={!!viewerImage}
+        imageUrl={viewerImage}
+        onClose={() => setViewerImage(null)}
+      />
       <div className="food-display-header">
         <h2>Choose the best!</h2>
         <div className="category-tabs">
@@ -99,21 +110,33 @@ const FoodDisplay = ({ category }) => {
 
       <div className="food-display-list">
         {displayItems.map((item) => (
-          <FoodItem
-            key={item._id}
-            id={item._id}
-            name={item.name}
-            description={item.description}
-            prices={item.prices || { g250: item.price }}
-            marketPrices={
-              item.marketPrices || { g250: item.marketPrice || item.price }
-            }
-            image={item.image}
-            quantityOptions={item.quantityOptions || { g250: true }}
-            status={item.status}
-            rating={item.rating || 0}
-            reviewCount={item.reviewCount || 0}
-          />
+          <div key={item._id} className="food-item-wrapper">
+            <div className="view-image-overlay">
+              <button 
+                className="view-image-btn"
+                onClick={() => handleImageView(item.image)}
+                title="View Image"
+              >
+                <Eye size={20} />
+              </button>
+            </div>
+            <div onDoubleClick={() => handleImageView(item.image)}>
+              <FoodItem
+                id={item._id}
+                name={item.name}
+                description={item.description}
+                prices={item.prices || { g250: item.price }}
+                marketPrices={
+                  item.marketPrices || { g250: item.marketPrice || item.price }
+                }
+                image={item.image}
+                quantityOptions={item.quantityOptions || { g250: true }}
+                status={item.status}
+                rating={item.rating || 0}
+                reviewCount={item.reviewCount || 0}
+              />
+            </div>
+          </div>
         ))}
         <div className="view-all-card" onClick={handleViewAll}>
           <div className="view-all-content">
