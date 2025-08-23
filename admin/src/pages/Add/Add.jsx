@@ -119,31 +119,37 @@ const Add = () => {
     if (!validateForm()) return;
 
     setLoading(true);
-    const formData = new FormData();
-    formData.append("image", image);
-    formData.append("name", data.name);
-    formData.append("description", data.description);
-    formData.append("category", data.category);
-
-    // Format price data to match backend expectations
-    const prices = {
-      g250: data.price, // Set the price for 250g as the main price
-    };
-    const marketPrices = {
-      g250: data.marketPrice || data.price,
-    };
-    const quantityOptions = {
-      g250: true, // Enable 250g option by default
-    };
-
-    formData.append("prices", JSON.stringify(prices));
-    formData.append("marketPrices", JSON.stringify(marketPrices));
-    formData.append("quantityOptions", JSON.stringify(quantityOptions));
-    formData.append("status", data.status);
-    formData.append("rating", data.rating);
-    formData.append("reviewCount", data.reviewCount);
-
     try {
+      const formData = new FormData();
+      
+      // Append image with specific field name matching backend
+      formData.append("image", image);
+      
+      // Basic product info
+      formData.append("name", data.name.trim());
+      formData.append("description", data.description.trim());
+      formData.append("category", data.category);
+
+      // Format price data to match backend expectations
+      const prices = {
+        g250: parseFloat(data.price), // Ensure price is a number
+      };
+      const marketPrices = {
+        g250: parseFloat(data.marketPrice) || parseFloat(data.price),
+      };
+      const quantityOptions = {
+        g250: true, // Enable 250g option by default
+      };
+
+      // Convert objects to JSON strings for FormData
+      formData.append("prices", JSON.stringify(prices));
+      formData.append("marketPrices", JSON.stringify(marketPrices));
+      formData.append("quantityOptions", JSON.stringify(quantityOptions));
+      
+      // Additional fields
+      formData.append("status", data.status);
+      formData.append("rating", parseFloat(data.rating));
+      formData.append("reviewCount", parseInt(data.reviewCount));
       const response = await axios.post(
         `${import.meta.env.VITE_BACKEND_URL}/api/food/add`,
         formData,
@@ -151,11 +157,15 @@ const Add = () => {
           headers: {
             "Content-Type": "multipart/form-data",
           },
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            // You can add a progress indicator here if needed
+          },
         }
       );
 
       if (response.data.success) {
-        toast.success("Product Added Successfully");
+        toast.success("Product Added Successfully!");
         // Reset form
         setData({
           name: "",
@@ -172,7 +182,15 @@ const Add = () => {
         toast.error(response.data.message || "Failed to add product");
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Error adding product");
+      console.error("Upload error:", error);
+      if (error.response?.status === 413) {
+        toast.error("Image file size is too large. Please choose a smaller image.");
+      } else {
+        toast.error(
+          error.response?.data?.message || 
+          "Error adding product. Please check your connection and try again."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -180,6 +198,12 @@ const Add = () => {
 
   return (
     <div className="add-product">
+      {loading && (
+        <div className="loading-overlay">
+          <div className="loading-spinner"></div>
+          <p>Uploading product...</p>
+        </div>
+      )}
       <div className="form-header">
         <h1>Add New Product</h1>
         <p>Fill in the details below to add a new product to your inventory</p>

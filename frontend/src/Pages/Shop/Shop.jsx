@@ -4,9 +4,10 @@ import "./Shop.css";
 import { StoreContext } from "../../Context/StoreContext";
 import FoodItem from "../../Components/FoodItem/FoodItem";
 import { NavContext } from "../../Context/NavContext";
-import { Zap, ShoppingBag } from "lucide-react";
+import { Zap, ShoppingBag, Eye } from "lucide-react";
+import ImageViewer from "../../Components/ImageViewer/ImageViewer";
 const ShopComponent = () => {
-  const { food_list, loading } = useContext(StoreContext);
+  const { food_list, loading, url } = useContext(StoreContext);
   const { setActiveNav } = useContext(NavContext);
   const [searchParams] = useSearchParams();
   const [expandedItem, setExpandedItem] = useState(null);
@@ -15,8 +16,13 @@ const ShopComponent = () => {
   const [sortBy, setSortBy] = useState("name");
   const [currentPage, setCurrentPage] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
+  const [viewerImage, setViewerImage] = useState(null);
   const heroRef = useRef(null);
   const itemsPerPage = 21;
+
+  const handleImageView = (imageUrl) => {
+    setViewerImage(imageUrl.startsWith('http') ? imageUrl : `${url}/images/${imageUrl}`);
+  };
 
   // Intersection Observer for animation
   useEffect(() => {
@@ -143,6 +149,11 @@ const ShopComponent = () => {
 
   return (
     <div className="shop">
+      <ImageViewer
+        isOpen={!!viewerImage}
+        imageUrl={viewerImage}
+        onClose={() => setViewerImage(null)}
+      />
       {/* Banner Section */}
       <section className="shop-hero-section" ref={heroRef}>
         <div className="shop-background"></div>
@@ -235,20 +246,33 @@ const ShopComponent = () => {
 
           <div className="food-display-list">
             {paginatedItems.map((item) => (
-              <FoodItem
-                key={item._id}
-                id={item._id}
-                {...item}
-                isExpanded={expandedItem === item._id}
-                onExpand={() => {
-                  // Close any open item before expanding the new one
-                  if (expandedItem === item._id) {
-                    setExpandedItem(null);
-                  } else {
-                    setExpandedItem(item._id);
-                  }
-                }}
-              />
+              <div key={item._id} className="food-item-wrapper">
+                <div className="view-image-overlay">
+                  <button 
+                    className="view-image-btn"
+                    onClick={() => handleImageView(item.image)}
+                    title="View Image"
+                  >
+                    <Eye size={20} />
+                  </button>
+                </div>
+                <div onDoubleClick={() => handleImageView(item.image)}>
+                  <FoodItem
+                    key={item._id}
+                    id={item._id}
+                    {...item}
+                    isExpanded={expandedItem === item._id}
+                    onExpand={() => {
+                      // Close any open item before expanding the new one
+                      if (expandedItem === item._id) {
+                        setExpandedItem(null);
+                      } else {
+                        setExpandedItem(item._id);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             ))}
             {paginatedItems.length === 0 && (
               <div className="no-results">

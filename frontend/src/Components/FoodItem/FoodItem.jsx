@@ -65,9 +65,13 @@ const FoodItemComponent = ({
           className={`food-item-image ${
             status !== "in-stock" ? "grayscale" : ""
           }`}
-          src={`${url}/images/${image}`}
+          src={image.startsWith('http') ? image : `${url}/images/${image}`}
           alt={name}
           loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = '/placeholder-image.png'; // Add a placeholder image in your public folder
+          }}
         />
         {status !== "in-stock" && (
           <div className="status-badge">{getStatusDisplay()}</div>

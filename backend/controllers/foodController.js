@@ -45,6 +45,8 @@ const addFood = async (req, res) => {
                 message: "Please upload an image for the food item"
             });
         }
+        
+        // req.file.path will now contain the Cloudinary URL
 
         // Validate status
         const validStatuses = ['in-stock', 'out-of-stock', 'coming-soon'];
@@ -67,6 +69,24 @@ const addFood = async (req, res) => {
             });
         }
 
+        if (!req.file) {
+            console.error('No file uploaded');
+            return res.status(400).json({
+                success: false,
+                message: "Please upload an image file"
+            });
+        }
+
+        if (!req.file.path) {
+            console.error('Cloudinary upload failed');
+            return res.status(400).json({
+                success: false,
+                message: "Image upload to cloud storage failed. Please try again."
+            });
+        }
+
+        console.log('Uploaded image path:', req.file.path);
+
         const food = new foodModel({
             name,
             description,
@@ -80,7 +100,7 @@ const addFood = async (req, res) => {
             tags,
             featured: featured === 'true' || featured === true,
             discount: Number(discount),
-            image: req.file.filename
+            image: req.file.path
         });
 
         await food.save();
@@ -95,7 +115,8 @@ const addFood = async (req, res) => {
         console.error('Error adding food item:', error);
         return res.status(500).json({
             success: false,
-            message: "Internal server error while adding food item"
+            message: error.message || "Error adding product. Please try again.",
+            error: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
 };

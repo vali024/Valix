@@ -260,9 +260,13 @@ const List = () => {
             }`}
           >
             <img
-              src={`${url}/images/${item.image}`}
+              src={item.image.startsWith('http') ? item.image : `${url}/images/${item.image}`}
               alt={item.name}
               className={item.status !== "in-stock" ? "grayscale" : ""}
+              onError={(e) => {
+                console.error('Image load error:', item.image);
+                e.target.src = 'https://via.placeholder.com/100x100?text=No+Image';
+              }}
             />
             <p>{item.name}</p>
             <p>{item.category}</p>

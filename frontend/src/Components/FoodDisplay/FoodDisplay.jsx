@@ -14,7 +14,7 @@ const FoodDisplay = ({ category }) => {
   const [viewerImage, setViewerImage] = useState(null);
   
   const handleImageView = (imageUrl) => {
-    setViewerImage(`${import.meta.env.VITE_BACKEND_URL}/images/${imageUrl}`);
+    setViewerImage(imageUrl.startsWith('http') ? imageUrl : `${import.meta.env.VITE_BACKEND_URL}/images/${imageUrl}`);
   };
 
   const tabs = [
