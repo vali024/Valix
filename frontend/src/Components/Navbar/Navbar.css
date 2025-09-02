@@ -256,6 +256,30 @@ body {
   height: 16px;
 }
 
+/*Moblie donate button*/
+.mobile-donate-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.875rem;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
+  color: white;
+  text-decoration: none;
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.mobile-donate-btn:hover {
+  background: linear-gradient(135deg, #d97706, #dc2626);
+}
+
+.mobile-donate-icon {
+  width: 18px;
+  height: 18px;
+}
+
 /* Get Quote Button */
 .get-quote-btn {
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
