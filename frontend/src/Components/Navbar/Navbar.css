@@ -256,56 +256,6 @@ body {
   height: 16px;
 }
 
-/* Donate Button */
-.donate-nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  color: white;
-  text-decoration: none;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-}
-
-.donate-nav-btn:hover {
-  background: linear-gradient(135deg, #d97706, #dc2626);
-  transform: translateY(-2px) scale(1.05);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
-}
-
-.donate-icon {
-  width: 16px;
-  height: 16px;
-}
-
-.mobile-donate-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.875rem;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  color: white;
-  text-decoration: none;
-  border-radius: 12px;
-  font-weight: 500;
-  transition: all 0.3s ease;
-}
-
-.mobile-donate-btn:hover {
-  background: linear-gradient(135deg, #d97706, #dc2626);
-}
-
-.mobile-donate-icon {
-  width: 18px;
-  height: 18px;
-}
-
 /* Get Quote Button */
 .get-quote-btn {
   background: linear-gradient(135deg, #3b82f6, #8b5cf6);
