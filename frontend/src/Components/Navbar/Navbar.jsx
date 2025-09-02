@@ -150,22 +150,6 @@ const Navbar = ({ setShowLogin }) => {
               <span>WA</span>
             </a>
 
-            {/* Donate Button */}
-            <Link
-              to="/about#donations"
-              className="donate-nav-btn"
-              onClick={(e) => {
-                const donationSection = document.querySelector('.donation-section');
-                if (location.pathname === '/about' && donationSection) {
-                  e.preventDefault();
-                  donationSection.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-            >
-              <Banknote className="donate-icon" />
-              <span>Donate</span>
-            </Link>
-
             {/* Auth Section */}
             {!token ? (
               <button
